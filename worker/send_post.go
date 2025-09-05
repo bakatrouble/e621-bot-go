@@ -115,7 +115,7 @@ func resizeImage(imageBytes []byte) ([]byte, error) {
 		im = resize.Thumbnail(uint(math.Floor(w*scale)), uint(math.Floor(h*scale)), im, resize.Lanczos3)
 	}
 	buf := new(bytes.Buffer)
-	if err = jpeg.Encode(buf, im, &jpeg.Options{Quality: 85}); err != nil {
+	if err = jpeg.Encode(buf, im, &jpeg.Options{Quality: 95}); err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
