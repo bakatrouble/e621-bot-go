@@ -1,50 +1,65 @@
 package utils
 
 import (
+	"context"
 	"e621-bot-go/utils/tint"
 	"fmt"
 	"log/slog"
 	"os"
 	"path"
 
+	"github.com/cappuccinotm/slogx"
 	"github.com/gookit/slog/rotatefile"
-	"github.com/samber/slog-multi"
 )
 
-type Logger = *slog.Logger
+// ApplyHandler wraps slog.Handler as Middleware.
+func applyHandler(handler slog.Handler) slogx.Middleware {
+	return func(next slogx.HandleFunc) slogx.HandleFunc {
+		return func(ctx context.Context, rec slog.Record) error {
+			err := handler.Handle(ctx, rec)
+			if err != nil {
+				return err
+			}
 
-func createLogsDir(name string) {
-	err := os.MkdirAll("logs", os.ModePerm)
-	if err != nil {
-		panic("failed to create logs directory: " + err.Error())
+			return next(ctx, rec)
+		}
 	}
 }
 
-func NewLogger(module string) Logger {
+type Logger = *slog.Logger
 
+func NewLogger(module string) Logger {
 	level := slog.LevelDebug
-	writer, err := rotatefile.NewConfig(
-		path.Join("logs", fmt.Sprintf("%s.log", module)),
-		func(c *rotatefile.Config) {
-			c.MaxSize = 10 * 1024 * 1024 // 10 MB
-			c.BackupNum = 5
-			c.RotateTime = rotatefile.EveryMonth
-			c.Compress = true
-		},
-	).Create()
-	if err != nil {
-		panic("failed to create log file: " + err.Error())
+
+	prefix := ""
+	if module != "" {
+		prefix = fmt.Sprintf("[%s] ", module)
 	}
 
-	consoleHandler := tint.NewHandler(os.Stdout, &tint.Options{
+	textHandler := tint.NewHandler(os.Stdout, &tint.Options{
 		Level:  level,
-		Prefix: fmt.Sprintf("[%s]", module),
+		Prefix: prefix,
 	})
 
-	return slog.New(
-		slogmulti.Fanout(
-			consoleHandler,
-			slog.NewTextHandler(writer, &slog.HandlerOptions{Level: level}),
-		),
-	)
+	var handlers []slogx.Middleware
+
+	if module != "" {
+		writer, err := rotatefile.NewConfig(
+			path.Join("logs", fmt.Sprintf("%s.log", module)),
+			func(c *rotatefile.Config) {
+				c.MaxSize = 10 * 1024 * 1024 // 10 MB
+				c.BackupNum = 5
+				c.RotateTime = rotatefile.EveryMonth
+				c.Compress = true
+			},
+		).Create()
+		if err != nil {
+			panic("failed to create log file: " + err.Error())
+		}
+		handlers = append(handlers,
+			applyHandler(slog.NewTextHandler(writer, &slog.HandlerOptions{Level: level})),
+		)
+	}
+
+	return slog.New(slogx.Accumulator(slogx.NewChain(textHandler, handlers...)))
 }

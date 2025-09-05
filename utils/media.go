@@ -12,7 +12,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/go-errors/errors"
 	"github.com/liamg/magic"
 	"github.com/nfnt/resize"
 )
@@ -22,7 +21,7 @@ func ConvertToMp4(ctx context.Context, mediaBytes []byte) ([]byte, error) {
 
 	t, err := magic.Lookup(mediaBytes)
 	if err != nil {
-		return nil, errors.New(err)
+		return nil, err
 	}
 
 	pattern := ""
@@ -30,12 +29,12 @@ func ConvertToMp4(ctx context.Context, mediaBytes []byte) ([]byte, error) {
 	case "mp4", "gif", "webm":
 		pattern = fmt.Sprintf("*.%s", t.Extension)
 	default:
-		return nil, errors.Errorf("unsupported media type: %s", t.Extension)
+		return nil, fmt.Errorf("unsupported media type: %s", t.Extension)
 	}
 
 	file, err := os.CreateTemp("", pattern)
 	if err != nil {
-		return nil, errors.New(err)
+		return nil, err
 	}
 	defer func(name string) {
 		_ = os.Remove(name)
@@ -43,12 +42,12 @@ func ConvertToMp4(ctx context.Context, mediaBytes []byte) ([]byte, error) {
 
 	_, err = file.Write(mediaBytes)
 	if err != nil {
-		return nil, errors.New(err)
+		return nil, err
 	}
 
 	err = file.Close()
 	if err != nil {
-		return nil, errors.New(err)
+		return nil, err
 	}
 
 	cmd := exec.CommandContext(ctx,
@@ -70,7 +69,7 @@ func ConvertToMp4(ctx context.Context, mediaBytes []byte) ([]byte, error) {
 	cmd.Stdout = os.Stdout
 
 	if err = cmd.Run(); err != nil {
-		return nil, errors.Errorf("ffmpeg error: %w", err)
+		return nil, fmt.Errorf("ffmpeg error: %w", err)
 	}
 
 	defer func(name string) {
@@ -79,12 +78,12 @@ func ConvertToMp4(ctx context.Context, mediaBytes []byte) ([]byte, error) {
 
 	vfile, err := os.Open(file.Name() + ".mp4")
 	if err != nil {
-		return nil, errors.New(err)
+		return nil, err
 	}
 
 	mediaBytes, err = io.ReadAll(vfile)
 	if err != nil {
-		return nil, errors.New(err)
+		return nil, err
 	}
 
 	return mediaBytes, nil

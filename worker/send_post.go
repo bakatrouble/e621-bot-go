@@ -4,13 +4,13 @@ import (
 	"context"
 	"e621-bot-go/e621"
 	"e621-bot-go/utils"
+	"errors"
 	"fmt"
 	_ "image/gif"
 	_ "image/png"
 	"regexp"
 	"strings"
 
-	"github.com/go-errors/errors"
 	"github.com/mymmrac/telego"
 	tu "github.com/mymmrac/telego/telegoutil"
 	_ "golang.org/x/image/webp"
@@ -126,7 +126,7 @@ func SendPost(ctx context.Context, client *e621.E621, postId int, query *utils.Q
 			return err
 		}
 	default:
-		return errors.New("unsupported file extension: " + post.File.Ext)
+		return fmt.Errorf("unsupported file extension: %s", post.File.Ext)
 	}
 
 	return nil
