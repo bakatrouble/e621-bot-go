@@ -6,6 +6,7 @@ require (
 	github.com/DrSmithFr/go-console v1.4.4
 	github.com/alecthomas/participle/v2 v2.1.4
 	github.com/alecthomas/repr v0.5.1
+	github.com/aws/aws-sdk-go v1.55.8
 	github.com/bsm/redislock v0.9.4
 	github.com/cappuccinotm/slogx v1.4.2
 	github.com/goccy/go-yaml v1.18.0
@@ -14,6 +15,7 @@ require (
 	github.com/liamg/magic v0.0.1
 	github.com/mymmrac/telego v1.3.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
+	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.13.0
 	golang.org/x/image v0.30.0
 )
@@ -29,6 +31,7 @@ require (
 	github.com/gookit/goutil v0.7.1 // indirect
 	github.com/grbit/go-json v0.11.0 // indirect
 	github.com/icholy/digest v1.1.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.9 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect

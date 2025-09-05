@@ -10,6 +10,7 @@ import (
 	_ "image/png"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/mymmrac/telego"
 	tu "github.com/mymmrac/telego/telegoutil"
@@ -62,17 +63,40 @@ func buildCaption(post *e621.Post, query *utils.Query) string {
 	return strings.Join(result, "\n")
 }
 
-func sendAsDocument(ctx context.Context, bytes []byte, caption string) error {
+func sendAsDocument(ctx context.Context, postId int, bytes []byte, caption string) error {
 	bot := ctx.Value("bot").(*telego.Bot)
 	config := ctx.Value("config").(*utils.Config)
+	logger := ctx.Value("logger").(utils.Logger)
 
-	_, err := bot.SendDocument(ctx,
-		tu.Document(
-			tu.ID(config.ChatId),
-			tu.FileFromBytes(bytes, "file.mp4"),
-		).WithCaption(caption).WithParseMode("html"),
-	)
-	return err
+	if len(bytes) < 50*1024*1024 {
+		_, err := bot.SendDocument(ctx,
+			tu.Document(
+				tu.ID(config.ChatId),
+				tu.FileFromBytes(bytes, "file.mp4"),
+			).WithCaption(caption).WithParseMode("html"),
+		)
+		return err
+	} else {
+		logger.Info("file is too large, uploading to S3")
+		url, err := utils.UploadToS3(ctx,
+			config,
+			fmt.Sprintf("e621-go-%d-%d.mp4", postId, time.Now().Unix()),
+			bytes,
+			"video/mp4",
+		)
+		logger.With("url", url).Info("uploaded to S3")
+		if err != nil {
+			return err
+		}
+		caption = fmt.Sprintf("%s\n\n%s", caption, url)
+		_, err = bot.SendMessage(ctx,
+			tu.Message(
+				tu.ID(config.ChatId),
+				caption,
+			).WithParseMode("html"),
+		)
+		return err
+	}
 }
 
 func sendAsPhoto(ctx context.Context, bytes []byte, caption string) error {
@@ -122,7 +146,7 @@ func SendPost(ctx context.Context, client *e621.E621, postId int, query *utils.Q
 		if err != nil {
 			return err
 		}
-		if err = sendAsDocument(ctx, mediaBytes, caption); err != nil {
+		if err = sendAsDocument(ctx, postId, mediaBytes, caption); err != nil {
 			return err
 		}
 	default:
