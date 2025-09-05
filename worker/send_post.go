@@ -12,6 +12,7 @@ import (
 	"image/jpeg"
 	_ "image/png"
 	"io"
+	"math"
 	"os"
 	"os/exec"
 	"regexp"
@@ -77,38 +78,6 @@ func convertToMp4(mediaBytes []byte, gif bool, ctx context.Context) ([]byte, err
 		return nil, fmt.Errorf("ffmpeg error: %w", err)
 	}
 
-	//input := ffmpeg_go.Input(file.Name())
-	//
-	//streams := make([]*ffmpeg_go.Stream, 0)
-	//streams = append(
-	//	streams,
-	//	input.Video().
-	//		Filter("pad", []string{
-	//			"width=ceil(iw/2)*2",
-	//			"height=ceil(ih/2)*2",
-	//			"x=0",
-	//			"y=0",
-	//			"color=black",
-	//		}),
-	//)
-	//
-	//kwargs := ffmpeg_go.KwArgs{
-	//	"vcodec":   "libx264",
-	//	"crf":      "26",
-	//	"movflags": "+faststart",
-	//}
-	//if !gif {
-	//	streams = append(streams, input.Audio())
-	//	kwargs["acodec"] = "aac"
-	//	kwargs["b:a"] = "128k"
-	//}
-	//
-	//err = ffmpeg_go.
-	//	Output(streams, file.Name()+".mp4", kwargs).
-	//	OverWriteOutput().
-	//	ErrorToStdOut().
-	//	Run()
-
 	if err != nil {
 		return nil, err
 	}
@@ -139,11 +108,14 @@ func resizeImage(imageBytes []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if imConfig.Width > 2000 || imConfig.Height > 2000 {
-		im = resize.Thumbnail(2000, 2000, im, resize.Lanczos3)
+	if imConfig.Width+imConfig.Height > 10000 {
+		w := float64(imConfig.Width)
+		h := float64(imConfig.Height)
+		scale := float64(10000) / (w + h)
+		im = resize.Thumbnail(uint(math.Floor(w*scale)), uint(math.Floor(h*scale)), im, resize.Lanczos3)
 	}
 	buf := new(bytes.Buffer)
-	if err = jpeg.Encode(buf, im, &jpeg.Options{Quality: 100}); err != nil {
+	if err = jpeg.Encode(buf, im, &jpeg.Options{Quality: 85}); err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
