@@ -1,5 +1,6 @@
 /.idea
 /logs/*
+/cache/*
 !.gitkeep
 /config.yaml
 /e621-bot-go
