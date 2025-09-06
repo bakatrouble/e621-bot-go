@@ -28,7 +28,6 @@ func SendCallbackHandler(ctx *th.Context, callback telego.CallbackQuery) error {
 		_ = bot.AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
 			CallbackQueryID: callback.ID,
 			Text:            "Error",
-			ShowAlert:       true,
 		})
 		return err
 	}
@@ -36,7 +35,6 @@ func SendCallbackHandler(ctx *th.Context, callback telego.CallbackQuery) error {
 	if err = bot.AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
 		CallbackQueryID: callback.ID,
 		Text:            "Sent",
-		ShowAlert:       true,
 	}); err != nil {
 		logger.With("err", err).Error("failed to answer callback query")
 		return err

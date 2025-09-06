@@ -140,11 +140,11 @@ func SendPost(ctx context.Context, client *e621.E621, postId int, query *utils.Q
 	kb := tu.InlineKeyboard([]telego.InlineKeyboardButton{
 		{
 			Text:         "NSFW",
-			CallbackData: "/send:nsfw",
+			CallbackData: "send:nsfw",
 		},
 		{
 			Text:         "SFW",
-			CallbackData: "/send:sfw",
+			CallbackData: "send:sfw",
 		},
 	})
 

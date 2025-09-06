@@ -74,7 +74,7 @@ func StartBot(ctx context.Context) {
 	})
 	bh.HandleMessage(handlers.AddCommandHandler, messageCommands([]string{"add"}))
 	bh.HandleMessage(handlers.DelCommandHandler, messageCommands([]string{"del", "delete", "rm", "rem", "remove"}))
-	bh.HandleCallbackQuery(handlers.SendCallbackHandler, th.CallbackDataPrefix("/send:"))
+	bh.HandleCallbackQuery(handlers.SendCallbackHandler, th.CallbackDataPrefix("send:"))
 
 	// Initialize done chan
 	done := make(chan struct{}, 1)
