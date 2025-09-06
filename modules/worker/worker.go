@@ -26,6 +26,7 @@ func StartWorker(ctx context.Context) {
 	bot, err := telegram_bot.CreateBot(ctx, logger)
 	if err != nil {
 		logger.With("err", err).Error("failed to create bot")
+		panic(err)
 		return
 	}
 	ctx = context.WithValue(ctx, "bot", bot)

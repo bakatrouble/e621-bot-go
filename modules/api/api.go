@@ -154,5 +154,6 @@ func StartAPI(ctx context.Context) {
 
 	if err := router.RunWithContext(ctx); err != nil && !errors.Is(err, context.Canceled) {
 		logger.With("err", err).Error("failed to start web api")
+		panic(err)
 	}
 }
