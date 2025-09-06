@@ -43,7 +43,7 @@ func TestScript(cmd *go_console.Script) go_console.ExitCode {
 
 	client := e621.NewE621(logger)
 
-	err = worker.SendPost(ctx, client, postId, utils.EmptyQueryInfo)
+	err = worker.SendPost(ctx, client, postId, []*utils.QueryInfo{})
 	if err != nil {
 		fmt.Printf("Failed to send post: %s\n", err.Error())
 		return go_console.ExitError

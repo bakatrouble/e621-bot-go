@@ -4,6 +4,7 @@ import (
 	"context"
 	"e621-bot-go/e621"
 	"e621-bot-go/storage"
+	"e621-bot-go/telegram_bot"
 	"e621-bot-go/utils"
 	"e621-bot-go/worker"
 	"fmt"
@@ -22,6 +23,7 @@ func CheckPvScript(cmd *go_console.Script) go_console.ExitCode {
 	if err != nil {
 		panic("Failed to parse config file: " + err.Error())
 	}
+	ctx = context.WithValue(ctx, "config", config)
 
 	postIdStr := cmd.Input.Argument("post_id")
 	postId, err := strconv.Atoi(postIdStr)
@@ -30,9 +32,14 @@ func CheckPvScript(cmd *go_console.Script) go_console.ExitCode {
 		return go_console.ExitError
 	}
 
-	logger := utils.NewLogger("check_pv")
+	logger := utils.NewLogger("")
+	ctx = context.WithValue(ctx, "logger", logger)
+	bot, _ := telegram_bot.CreateBot(ctx, logger)
+	ctx = context.WithValue(ctx, "bot", bot)
 	client := e621.NewE621(logger)
+	ctx = context.WithValue(ctx, "e621", client)
 	store := storage.NewStorage(config.Redis)
+	ctx = context.WithValue(ctx, "store", store)
 
 	pvs, err := client.GetPostVersions().WithPostID(postId).Send(ctx)
 	if err != nil {
@@ -52,9 +59,14 @@ func CheckPvScript(cmd *go_console.Script) go_console.ExitCode {
 	}
 
 	for _, pv := range pvs {
-		query := worker.CheckPostVersion(pv, queries)
-		if query != nil {
-			logger.With("post_version_id", pv.ID, "query", query.Raw).Info("Post version matched")
+		if matchingQueries := worker.CheckPostVersion(pv, queries); len(matchingQueries) > 0 {
+			for _, query := range matchingQueries {
+				logger.With("post_version_id", pv.ID, "query", query.Raw).Info("Post version matched")
+			}
+			if err = worker.SendPost(ctx, client, pv.PostID, matchingQueries); err != nil {
+				logger.With("err", err).Error("failed to send post")
+				return go_console.ExitError
+			}
 		} else {
 			logger.With("post_version_id", pv.ID).Info("Post version did not match any query")
 		}

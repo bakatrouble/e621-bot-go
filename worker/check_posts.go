@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func CheckPostVersion(pv *e621.PostVersion, queries []*utils.QueryInfo) *utils.QueryInfo {
+func CheckPostVersion(pv *e621.PostVersion, queries []*utils.QueryInfo) []*utils.QueryInfo {
 	currentTags := map[string]bool{}
 	for _, tag := range strings.Split(pv.Tags, " ") {
 		currentTags[tag] = true
@@ -26,13 +26,14 @@ func CheckPostVersion(pv *e621.PostVersion, queries []*utils.QueryInfo) *utils.Q
 		prevTags[tag] = false
 	}
 
+	matchingQueries := make([]*utils.QueryInfo, 0)
 	for _, query := range queries {
 		if query.Check(currentTags) && !query.Check(prevTags) {
-			return query
+			matchingQueries = append(matchingQueries, query)
 		}
 	}
 
-	return nil
+	return matchingQueries
 }
 
 func checkPosts(ctx context.Context) error {
@@ -62,8 +63,8 @@ func checkPosts(ctx context.Context) error {
 	}
 
 	type postPlan struct {
-		pv    *e621.PostVersion
-		query *utils.QueryInfo
+		pv              *e621.PostVersion
+		matchingQueries []*utils.QueryInfo
 	}
 
 	pvsToPost := make([]postPlan, 0)
@@ -88,8 +89,8 @@ func checkPosts(ctx context.Context) error {
 			}
 
 			//logger.With("post_version_id", pv.ID).With("post_id", pv.PostID).Debug("checking post version")
-			if query := CheckPostVersion(pv, queries); query != nil {
-				pvsToPost = append(pvsToPost, postPlan{pv, query})
+			if matchingQueries := CheckPostVersion(pv, queries); len(matchingQueries) > 0 {
+				pvsToPost = append(pvsToPost, postPlan{pv, matchingQueries})
 			}
 		}
 		logger.With("count", len(page)).Info("fetched post versions page")
@@ -134,7 +135,7 @@ func checkPosts(ctx context.Context) error {
 		if sentFlags[plan.pv.PostID] {
 			continue
 		}
-		if err = SendPost(ctx, client, plan.pv.PostID, plan.query); err != nil {
+		if err = SendPost(ctx, client, plan.pv.PostID, plan.matchingQueries); err != nil {
 			logger.With("err", err).With("post_version_id", plan.pv.ID).Error("failed to send post")
 			return err
 		}

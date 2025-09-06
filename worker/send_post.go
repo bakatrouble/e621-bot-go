@@ -22,8 +22,13 @@ func tagToHashtag(tag string) string {
 	return "#" + r.ReplaceAllString(tag, "_")
 }
 
-func buildCaption(post *e621.Post, query *utils.Query) string {
-	queryTags := query.MentionedTags()
+func buildCaption(post *e621.Post, matchingQueries []*utils.QueryInfo) string {
+	queryTags := make(map[string]struct{})
+	for _, query := range matchingQueries {
+		for tag := range query.Query.MentionedTags(false) {
+			queryTags[tag] = struct{}{}
+		}
+	}
 	monitoredTags := make([]string, 0)
 	artistTags := make([]string, 0)
 	characterTags := make([]string, 0)
@@ -140,7 +145,7 @@ func sendAsPhoto(ctx context.Context, postId int, bytes []byte, caption string) 
 	return err
 }
 
-func SendPost(ctx context.Context, client *e621.E621, postId int, query *utils.QueryInfo) error {
+func SendPost(ctx context.Context, client *e621.E621, postId int, matchingQueries []*utils.QueryInfo) error {
 	logger := ctx.Value("logger").(utils.Logger)
 
 	post, err := client.GetPost(ctx, postId)
@@ -152,7 +157,7 @@ func SendPost(ctx context.Context, client *e621.E621, postId int, query *utils.Q
 		return errors.New("post has no file url")
 	}
 
-	caption := buildCaption(post, query.Query)
+	caption := buildCaption(post, matchingQueries)
 
 	mediaBytes, err := client.DownloadFile(ctx, *post.File.Url)
 	if err != nil {

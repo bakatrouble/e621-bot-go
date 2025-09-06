@@ -38,15 +38,17 @@ func (t *Term) Check(tagList map[string]bool) bool {
 	return true
 }
 
-func (t *Term) MentionedTags() map[string]bool {
+func (t *Term) MentionedTags(inverted bool) map[string]struct{} {
 	if t.Not != nil {
-		return t.Not.MentionedTags()
+		return t.Not.MentionedTags(!inverted)
 	} else if t.Atom != nil {
-		return map[string]bool{*t.Atom.Tag: true}
+		if !inverted {
+			return map[string]struct{}{*t.Atom.Tag: struct{}{}}
+		}
 	} else if t.SubQuery != nil {
-		return t.SubQuery.MentionedTags()
+		return t.SubQuery.MentionedTags(inverted)
 	}
-	return map[string]bool{}
+	return map[string]struct{}{}
 }
 
 type Query struct {
@@ -76,23 +78,29 @@ func (q *Query) Check(tagList map[string]bool) bool {
 	return true
 }
 
-func (q *Query) MentionedTags() map[string]bool {
-	tagSet := make(map[string]bool)
+func (q *Query) MentionedTags(inverted bool) map[string]struct{} {
+	tagSet := make(map[string]struct{})
 	if q.And != nil {
 		for _, term := range q.And {
-			for tag, _ := range term.MentionedTags() {
-				tagSet[tag] = true
+			for tag := range term.MentionedTags(inverted) {
+				if !inverted {
+					tagSet[tag] = struct{}{}
+				}
 			}
 		}
 	} else if q.Or != nil {
 		for _, term := range q.Or {
-			for tag, _ := range term.MentionedTags() {
-				tagSet[tag] = true
+			for tag := range term.MentionedTags(inverted) {
+				if !inverted {
+					tagSet[tag] = struct{}{}
+				}
 			}
 		}
 	} else if q.Term != nil {
-		for tag, _ := range q.Term.MentionedTags() {
-			tagSet[tag] = true
+		for tag := range q.Term.MentionedTags(inverted) {
+			if !inverted {
+				tagSet[tag] = struct{}{}
+			}
 		}
 	}
 	return tagSet
