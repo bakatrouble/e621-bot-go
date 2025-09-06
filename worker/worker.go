@@ -31,6 +31,8 @@ func StartWorker(ctx context.Context) {
 	ctx = context.WithValue(ctx, "bot", bot)
 	ctx = context.WithValue(ctx, "logger", logger)
 
+	go utils.CacheCleaner(ctx)
+
 	ticker := time.NewTicker(config.Interval)
 	for {
 		select {

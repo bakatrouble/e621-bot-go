@@ -63,12 +63,29 @@ func buildCaption(post *e621.Post, query *utils.Query) string {
 	return strings.Join(result, "\n")
 }
 
+func buildKeyboard(fileName string) *telego.InlineKeyboardMarkup {
+	return tu.InlineKeyboard([]telego.InlineKeyboardButton{
+		{
+			Text:         "NSFW",
+			CallbackData: fmt.Sprintf("send:nsfw %s", fileName),
+		},
+		{
+			Text:         "SFW",
+			CallbackData: fmt.Sprintf("send:sfw %s", fileName),
+		},
+	})
+}
+
 func sendAsVideo(ctx context.Context, postId int, bytes []byte, caption string) error {
 	bot := ctx.Value("bot").(*telego.Bot)
 	config := ctx.Value("config").(*utils.Config)
 	logger := ctx.Value("logger").(utils.Logger)
 
 	if len(bytes) < 50*1024*1024 {
+		cachedName := fmt.Sprintf("%d-%d.mp4", postId, time.Now().Unix())
+		_, _ = utils.CacheFile(ctx, bytes, cachedName)
+		kb := buildKeyboard(cachedName)
+
 		_, err := bot.SendVideo(ctx,
 			tu.Video(
 				tu.ID(config.ChatId),
@@ -76,7 +93,8 @@ func sendAsVideo(ctx context.Context, postId int, bytes []byte, caption string) 
 			).
 				WithSupportsStreaming().
 				WithCaption(caption).
-				WithParseMode("html"),
+				WithParseMode("html").
+				WithReplyMarkup(kb),
 		)
 		return err
 	} else {
@@ -102,9 +120,13 @@ func sendAsVideo(ctx context.Context, postId int, bytes []byte, caption string) 
 	}
 }
 
-func sendAsPhoto(ctx context.Context, bytes []byte, caption string, kb *telego.InlineKeyboardMarkup) error {
+func sendAsPhoto(ctx context.Context, postId int, bytes []byte, caption string) error {
 	bot := ctx.Value("bot").(*telego.Bot)
 	config := ctx.Value("config").(*utils.Config)
+
+	cachedName := fmt.Sprintf("%d-%d.jpg", postId, time.Now().Unix())
+	_, _ = utils.CacheFile(ctx, bytes, cachedName)
+	kb := buildKeyboard(cachedName)
 
 	_, err := bot.SendPhoto(ctx,
 		tu.Photo(
@@ -137,32 +159,22 @@ func SendPost(ctx context.Context, client *e621.E621, postId int, query *utils.Q
 		return err
 	}
 
-	kb := tu.InlineKeyboard([]telego.InlineKeyboardButton{
-		{
-			Text:         "NSFW",
-			CallbackData: "send:nsfw",
-		},
-		{
-			Text:         "SFW",
-			CallbackData: "send:sfw",
-		},
-	})
-
 	switch post.File.Ext {
 	case "jpg", "png", "webp":
-		mediaBytes, err = utils.ResizeImage(mediaBytes)
-		logger.With("size", len(mediaBytes)).Debug("resized image")
-		if err != nil {
+		if mediaBytes, err = utils.ResizeImage(mediaBytes); err != nil {
 			return err
 		}
-		if err = sendAsPhoto(ctx, mediaBytes, caption, kb); err != nil {
+		logger.With("size", len(mediaBytes)).Debug("resized image")
+
+		if err = sendAsPhoto(ctx, postId, mediaBytes, caption); err != nil {
 			return err
 		}
 	case "gif", "mp4", "webm":
-		mediaBytes, err = utils.ConvertToMp4(ctx, mediaBytes)
-		if err != nil {
+		if mediaBytes, err = utils.ConvertToMp4(ctx, mediaBytes); err != nil {
 			return err
 		}
+		logger.With("size", len(mediaBytes)).Debug("converted to mp4")
+
 		if err = sendAsVideo(ctx, postId, mediaBytes, caption); err != nil {
 			return err
 		}
