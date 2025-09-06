@@ -2,6 +2,7 @@ package scripts
 
 import (
 	"context"
+	"e621-bot-go/modules/api"
 	"e621-bot-go/modules/telegram_bot"
 	"e621-bot-go/modules/worker"
 	"e621-bot-go/storage"
@@ -32,6 +33,8 @@ func StartScript(cmd *go_console.Script) go_console.ExitCode {
 	go worker.StartWorker(ctx)
 	wg.Add(1)
 	go telegram_bot.StartBot(ctx)
+	wg.Add(1)
+	go api.StartAPI(ctx)
 	wg.Add(1)
 
 	wg.Wait()

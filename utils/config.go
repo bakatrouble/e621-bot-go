@@ -9,27 +9,32 @@ import (
 )
 
 type AwsConfig struct {
-	Region    string `yaml:"region"`
-	Bucket    string `yaml:"bucket"`
-	AccessKey string `yaml:"access_key"`
-	SecretKey string `yaml:"secret_key"`
+	Region    string `yaml:"region" binding:"required"`
+	Bucket    string `yaml:"bucket" binding:"required"`
+	AccessKey string `yaml:"access_key" binding:"required"`
+	SecretKey string `yaml:"secret_key" binding:"required"`
 }
 
 type DestinationsConfig struct {
-	Nsfw string `yaml:"nsfw"`
-	Sfw  string `yaml:"sfw"`
+	Nsfw string `yaml:"nsfw" binding:"required"`
+	Sfw  string `yaml:"sfw" binding:"required"`
+}
+
+type ApiConfig struct {
+	Port int      `yaml:"port" binding:"required"`
+	Keys []string `yaml:"keys" binding:"required"`
 }
 
 type Config struct {
-	BotToken     string             `yaml:"bot_token"`
-	ChatId       int64              `yaml:"chat_id"`
-	SharedChatId int64              `yaml:"shared_chat_id"`
-	ApiPort      int                `yaml:"api_port"`
-	Interval     time.Duration      `yaml:"interval"`
-	Redis        string             `yaml:"redis"`
-	CacheDir     string             `yaml:"cache_dir"`
-	Aws          AwsConfig          `yaml:"aws"`
-	Destinations DestinationsConfig `yaml:"destinations"`
+	BotToken     string             `yaml:"bot_token" binding:"required"`
+	ChatId       int64              `yaml:"chat_id" binding:"required"`
+	Api          ApiConfig          `yaml:"api" binding:"required"`
+	Interval     time.Duration      `yaml:"interval" binding:"required"`
+	Redis        string             `yaml:"redis" binding:"required"`
+	CacheDir     string             `yaml:"cache_dir" binding:"required"`
+	Aws          AwsConfig          `yaml:"aws" binding:"required"`
+	Destinations DestinationsConfig `yaml:"destinations" binding:"required"`
+	Production   bool               `yaml:"production"`
 }
 
 func ParseConfig(configFile string) (*Config, error) {
