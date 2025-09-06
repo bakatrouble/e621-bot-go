@@ -9,6 +9,7 @@ import (
 	_ "image/gif"
 	_ "image/png"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -51,6 +52,11 @@ func buildCaption(post *e621.Post, matchingQueries []*utils.QueryInfo) string {
 	for _, tag := range post.Tags.Copyright {
 		copyrightTags = append(copyrightTags, tagToHashtag(tag))
 	}
+
+	slices.Sort(monitoredTags)
+	slices.Sort(artistTags)
+	slices.Sort(characterTags)
+	slices.Sort(copyrightTags)
 
 	var result []string
 	result = append(result, fmt.Sprintf("Monitored tags: <b>%s</b>", strings.Join(monitoredTags, " ")))
