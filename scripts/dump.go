@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"slices"
 
-	go_console "github.com/DrSmithFr/go-console"
+	"github.com/DrSmithFr/go-console"
 )
 
 func DumpScript(cmd *go_console.Script) go_console.ExitCode {
@@ -29,12 +30,14 @@ func DumpScript(cmd *go_console.Script) go_console.ExitCode {
 		return go_console.ExitError
 	}
 
+	slices.Sort(subs)
+
 	if len(subs) == 0 {
 		fmt.Printf("No subs found\n")
 		return go_console.ExitSuccess
 	} else {
 		for _, sub := range subs {
-			fmt.Printf("\"%s\" ", sub)
+			fmt.Printf(`"%s" `, sub)
 		}
 		fmt.Printf("\n")
 	}
