@@ -49,9 +49,11 @@ func StartAPI(ctx context.Context) {
 		graceful.WithAddr(fmt.Sprintf("127.0.0.1:%d", config.Api.Port)),
 	)
 
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "X-API-Key")
 	router.Use(sloggin.New(logger))
 	router.Use(gin.Recovery())
-	router.Use(cors.Default())
+	router.Use(cors.New(corsConfig))
 
 	router.Use(func(c *gin.Context) {
 		apiKey := c.GetHeader("x-api-key")
