@@ -3,7 +3,7 @@ package worker
 import (
 	"context"
 	"e621-bot-go/e621"
-	"e621-bot-go/telegram_bot"
+	"e621-bot-go/modules/telegram_bot"
 	"e621-bot-go/utils"
 	"sync"
 	"time"

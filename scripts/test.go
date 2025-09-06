@@ -3,15 +3,15 @@ package scripts
 import (
 	"context"
 	"e621-bot-go/e621"
-	"e621-bot-go/telegram_bot"
+	"e621-bot-go/modules/telegram_bot"
+	"e621-bot-go/modules/worker"
 	"e621-bot-go/utils"
-	"e621-bot-go/worker"
 	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
 
-	go_console "github.com/DrSmithFr/go-console"
+	"github.com/DrSmithFr/go-console"
 )
 
 func TestScript(cmd *go_console.Script) go_console.ExitCode {

@@ -3,8 +3,8 @@ package telegram_bot
 import (
 	"context"
 	"e621-bot-go/e621"
+	handlers2 "e621-bot-go/modules/telegram_bot/handlers"
 	"e621-bot-go/storage"
-	"e621-bot-go/telegram_bot/handlers"
 	"e621-bot-go/utils"
 	"fmt"
 	"strings"
@@ -72,9 +72,9 @@ func StartBot(ctx context.Context) {
 
 		return ctx.Next(update)
 	})
-	bh.HandleMessage(handlers.AddCommandHandler, messageCommands([]string{"add"}))
-	bh.HandleMessage(handlers.DelCommandHandler, messageCommands([]string{"del", "delete", "rm", "rem", "remove"}))
-	bh.HandleCallbackQuery(handlers.SendCallbackHandler, th.CallbackDataPrefix("send:"))
+	bh.HandleMessage(handlers2.AddCommandHandler, messageCommands([]string{"add"}))
+	bh.HandleMessage(handlers2.DelCommandHandler, messageCommands([]string{"del", "delete", "rm", "rem", "remove"}))
+	bh.HandleCallbackQuery(handlers2.SendCallbackHandler, th.CallbackDataPrefix("send:"))
 
 	// Initialize done chan
 	done := make(chan struct{}, 1)
