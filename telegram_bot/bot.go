@@ -3,6 +3,8 @@ package telegram_bot
 import (
 	"context"
 	"e621-bot-go/e621"
+	"e621-bot-go/storage"
+	"e621-bot-go/telegram_bot/handlers"
 	"e621-bot-go/utils"
 	"fmt"
 	"strings"
@@ -39,6 +41,7 @@ func CreateBot(ctx context.Context, logger utils.Logger) (*telego.Bot, error) {
 
 func StartBot(ctx context.Context) {
 	config := ctx.Value("config").(*utils.Config)
+	store := ctx.Value("store").(*storage.Storage)
 	wg := ctx.Value("wg").(*sync.WaitGroup)
 
 	logger := utils.NewLogger("telegram-bot")
@@ -65,9 +68,13 @@ func StartBot(ctx context.Context) {
 		// Add context values for handlers
 		ctx = ctx.WithValue("config", config)
 		ctx = ctx.WithValue("logger", logger)
+		ctx = ctx.WithValue("store", store)
 
 		return ctx.Next(update)
 	})
+	bh.HandleMessage(handlers.AddCommandHandler, messageCommands([]string{"add"}))
+	bh.HandleMessage(handlers.DelCommandHandler, messageCommands([]string{"del", "delete", "rm", "rem", "remove"}))
+	bh.HandleCallbackQuery(handlers.SendCallbackHandler, th.CallbackDataPrefix("/send:"))
 
 	// Initialize done chan
 	done := make(chan struct{}, 1)
@@ -97,4 +104,24 @@ func StartBot(ctx context.Context) {
 
 	<-done
 	logger.Info("telegram bot stopped")
+}
+
+func messageCommands(commands []string) th.Predicate {
+	return func(_ context.Context, update telego.Update) bool {
+		if update.Message == nil {
+			return false
+		}
+
+		matches := th.CommandRegexp.FindStringSubmatch(update.Message.Text)
+		if len(matches) != th.CommandMatchGroupsLen {
+			return false
+		}
+
+		for _, command := range commands {
+			if strings.EqualFold(matches[th.CommandMatchCmdGroup], command) {
+				return true
+			}
+		}
+		return false
+	}
 }

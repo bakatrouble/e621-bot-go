@@ -63,17 +63,20 @@ func buildCaption(post *e621.Post, query *utils.Query) string {
 	return strings.Join(result, "\n")
 }
 
-func sendAsDocument(ctx context.Context, postId int, bytes []byte, caption string) error {
+func sendAsVideo(ctx context.Context, postId int, bytes []byte, caption string) error {
 	bot := ctx.Value("bot").(*telego.Bot)
 	config := ctx.Value("config").(*utils.Config)
 	logger := ctx.Value("logger").(utils.Logger)
 
 	if len(bytes) < 50*1024*1024 {
-		_, err := bot.SendDocument(ctx,
-			tu.Document(
+		_, err := bot.SendVideo(ctx,
+			tu.Video(
 				tu.ID(config.ChatId),
 				tu.FileFromBytes(bytes, "file.mp4"),
-			).WithCaption(caption).WithParseMode("html"),
+			).
+				WithSupportsStreaming().
+				WithCaption(caption).
+				WithParseMode("html"),
 		)
 		return err
 	} else {
@@ -99,7 +102,7 @@ func sendAsDocument(ctx context.Context, postId int, bytes []byte, caption strin
 	}
 }
 
-func sendAsPhoto(ctx context.Context, bytes []byte, caption string) error {
+func sendAsPhoto(ctx context.Context, bytes []byte, caption string, kb *telego.InlineKeyboardMarkup) error {
 	bot := ctx.Value("bot").(*telego.Bot)
 	config := ctx.Value("config").(*utils.Config)
 
@@ -107,7 +110,10 @@ func sendAsPhoto(ctx context.Context, bytes []byte, caption string) error {
 		tu.Photo(
 			tu.ID(config.ChatId),
 			tu.FileFromBytes(bytes, "image.jpg"),
-		).WithCaption(caption).WithParseMode("html"),
+		).
+			WithCaption(caption).
+			WithParseMode("html").
+			WithReplyMarkup(kb),
 	)
 	return err
 }
@@ -131,6 +137,17 @@ func SendPost(ctx context.Context, client *e621.E621, postId int, query *utils.Q
 		return err
 	}
 
+	kb := tu.InlineKeyboard([]telego.InlineKeyboardButton{
+		{
+			Text:         "NSFW",
+			CallbackData: "/send:nsfw",
+		},
+		{
+			Text:         "SFW",
+			CallbackData: "/send:sfw",
+		},
+	})
+
 	switch post.File.Ext {
 	case "jpg", "png", "webp":
 		mediaBytes, err = utils.ResizeImage(mediaBytes)
@@ -138,7 +155,7 @@ func SendPost(ctx context.Context, client *e621.E621, postId int, query *utils.Q
 		if err != nil {
 			return err
 		}
-		if err = sendAsPhoto(ctx, mediaBytes, caption); err != nil {
+		if err = sendAsPhoto(ctx, mediaBytes, caption, kb); err != nil {
 			return err
 		}
 	case "gif", "mp4", "webm":
@@ -146,7 +163,7 @@ func SendPost(ctx context.Context, client *e621.E621, postId int, query *utils.Q
 		if err != nil {
 			return err
 		}
-		if err = sendAsDocument(ctx, postId, mediaBytes, caption); err != nil {
+		if err = sendAsVideo(ctx, postId, mediaBytes, caption); err != nil {
 			return err
 		}
 	default:

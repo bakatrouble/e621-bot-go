@@ -15,12 +15,13 @@ type AwsConfig struct {
 }
 
 type Config struct {
-	BotToken string        `yaml:"bot_token"`
-	ChatId   int64         `yaml:"chat_id"`
-	ApiPort  int           `yaml:"api_port"`
-	Interval time.Duration `yaml:"interval"`
-	Redis    string        `yaml:"redis"`
-	Aws      AwsConfig     `yaml:"aws"`
+	BotToken     string        `yaml:"bot_token"`
+	ChatId       int64         `yaml:"chat_id"`
+	SharedChatId int64         `yaml:"shared_chat_id"`
+	ApiPort      int           `yaml:"api_port"`
+	Interval     time.Duration `yaml:"interval"`
+	Redis        string        `yaml:"redis"`
+	Aws          AwsConfig     `yaml:"aws"`
 }
 
 func ParseConfig(configFile string) (*Config, error) {

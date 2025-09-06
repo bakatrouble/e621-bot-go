@@ -31,7 +31,8 @@ func TestScript(cmd *go_console.Script) go_console.ExitCode {
 	}
 	ctx = context.WithValue(ctx, "config", config)
 
-	logger := utils.NewLogger("test")
+	logger := utils.NewLogger("")
+	ctx = context.WithValue(ctx, "logger", logger)
 
 	bot, err := telegram_bot.CreateBot(ctx, logger)
 	if err != nil {

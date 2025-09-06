@@ -24,14 +24,10 @@ func AddScript(cmd *go_console.Script) go_console.ExitCode {
 
 	store := storage.NewStorage(config.Redis)
 
-	existingSubs := make(map[string]struct{})
-	existingSubsList, err := store.GetSubs(ctx)
+	existingSubs, err := store.GetSubsMap(ctx)
 	if err != nil {
 		fmt.Printf("Failed to get existing subs: %s\n", err.Error())
 		return go_console.ExitError
-	}
-	for _, sub := range existingSubsList {
-		existingSubs[sub] = struct{}{}
 	}
 
 	addedSubs := make([]string, 0)

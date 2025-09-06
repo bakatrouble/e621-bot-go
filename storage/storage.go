@@ -43,6 +43,18 @@ func (s *Storage) GetSubs(ctx context.Context) ([]string, error) {
 	return r, nil
 }
 
+func (s *Storage) GetSubsMap(ctx context.Context) (map[string]struct{}, error) {
+	r, err := s.GetSubs(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[string]struct{}, len(r))
+	for _, sub := range r {
+		result[sub] = struct{}{}
+	}
+	return result, nil
+}
+
 func (s *Storage) AddSub(ctx context.Context, sub string) error {
 	if sub == "" {
 		return nil
