@@ -22,6 +22,7 @@ require (
 	github.com/redis/go-redis/v9 v9.13.0
 	github.com/samber/slog-gin v1.17.1
 	golang.org/x/image v0.30.0
+	gopkg.in/vansante/go-ffprobe.v2 v2.2.1
 )
 
 require (

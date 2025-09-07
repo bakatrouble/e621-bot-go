@@ -97,16 +97,33 @@ func sendAsVideo(ctx context.Context, postId int, bytes []byte, caption string) 
 		_, _ = utils.CacheFile(ctx, bytes, cachedName)
 		kb := buildKeyboard(cachedName)
 
-		_, err := bot.SendVideo(ctx,
-			tu.Video(
-				tu.ID(config.ChatId),
-				tu.FileFromBytes(bytes, "file.mp4"),
-			).
-				WithSupportsStreaming().
-				WithCaption(caption).
-				WithParseMode("html").
-				WithReplyMarkup(kb),
-		)
+		var hasAudio bool
+		var err error
+		if hasAudio, err = utils.Mp4HasAudio(ctx, bytes); err != nil {
+			logger.With("err", err).Error("failed to check if mp4 has audio")
+			hasAudio = true
+		} else if hasAudio {
+			_, err = bot.SendVideo(ctx,
+				&telego.SendVideoParams{
+					ChatID:            tu.ID(config.ChatId),
+					Video:             tu.FileFromBytes(bytes, "file.mp4"),
+					SupportsStreaming: true,
+					Caption:           caption,
+					ParseMode:         "html",
+					ReplyMarkup:       kb,
+				},
+			)
+		} else {
+			_, err = bot.SendAnimation(ctx,
+				&telego.SendAnimationParams{
+					ChatID:      tu.ID(config.ChatId),
+					Animation:   tu.FileFromBytes(bytes, "file.mp4"),
+					Caption:     caption,
+					ParseMode:   "html",
+					ReplyMarkup: kb,
+				},
+			)
+		}
 		return err
 	} else {
 		logger.Info("file is too large, uploading to S3")

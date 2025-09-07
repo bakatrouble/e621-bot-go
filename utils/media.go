@@ -14,6 +14,7 @@ import (
 
 	"github.com/liamg/magic"
 	"github.com/nfnt/resize"
+	"gopkg.in/vansante/go-ffprobe.v2"
 )
 
 func ConvertToMp4(ctx context.Context, mediaBytes []byte) ([]byte, error) {
@@ -109,4 +110,21 @@ func ResizeImage(imageBytes []byte) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+func Mp4HasAudio(ctx context.Context, mediaBytes []byte) (bool, error) {
+	var data *ffprobe.ProbeData
+	var err error
+	if data, err = ffprobe.ProbeReader(ctx, bytes.NewReader(mediaBytes)); err != nil {
+		return false, err
+	}
+	if data == nil || data.Streams == nil {
+		return false, fmt.Errorf("ffprobe returned nil data")
+	}
+	for _, stream := range data.Streams {
+		if stream.CodecType == "audio" {
+			return true, nil
+		}
+	}
+	return false, nil
 }
