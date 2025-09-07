@@ -42,4 +42,14 @@ func DeleteSubscriptionsHandler(c *gin.Context) {
 		c.JSON(404, gin.H{"status": "error", "message": "Some subscriptions were not found", "missing": missing})
 		return
 	}
+
+	for _, sub := range body.Subs {
+		if err = store.RemoveSub(c, sub); err != nil {
+			c.JSON(500, gin.H{"status": "error", "message": err.Error()})
+			return
+		}
+	}
+
+	slices.Sort(body.Subs)
+	c.JSON(200, gin.H{"status": "success", "deleted": body.Subs})
 }
