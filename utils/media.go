@@ -12,25 +12,26 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/liamg/magic"
 	"github.com/nfnt/resize"
+	"github.com/vimeo/go-magic/magic"
 	"gopkg.in/vansante/go-ffprobe.v2"
 )
 
 func ConvertToMp4(ctx context.Context, mediaBytes []byte) ([]byte, error) {
 	logger := ctx.Value("logger").(Logger)
 
-	t, err := magic.Lookup(mediaBytes)
-	if err != nil {
-		return nil, err
-	}
+	mime := magic.MimeFromBytes(mediaBytes)
 
 	pattern := ""
-	switch t.Extension {
-	case "mp4", "gif", "webm":
-		pattern = fmt.Sprintf("*.%s", t.Extension)
+	switch mime {
+	case "video/mp4":
+		pattern = "*.mp4"
+	case "image/gif":
+		pattern = "*.gif"
+	case "video/webm":
+		pattern = "*.webm"
 	default:
-		return nil, fmt.Errorf("unsupported media type: %s", t.Extension)
+		return nil, fmt.Errorf("unsupported media type: %s", mime)
 	}
 
 	file, err := os.CreateTemp("", pattern)

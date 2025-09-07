@@ -15,12 +15,12 @@ require (
 	github.com/goccy/go-yaml v1.18.0
 	github.com/gookit/slog v0.6.0
 	github.com/imroc/req/v3 v3.54.2
-	github.com/liamg/magic v0.0.1
 	github.com/mymmrac/telego v1.3.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.13.0
 	github.com/samber/slog-gin v1.17.1
+	github.com/vimeo/go-magic v1.0.0
 	golang.org/x/image v0.30.0
 	gopkg.in/vansante/go-ffprobe.v2 v2.2.1
 )
