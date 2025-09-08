@@ -2,6 +2,7 @@ package e621
 
 import (
 	"context"
+	"e621-bot-go/utils"
 	"fmt"
 	"strconv"
 
@@ -47,6 +48,8 @@ func (r *PostVersionsRequest) WithPostID(postID int) *PostVersionsRequest {
 }
 
 func (r *PostVersionsRequest) Send(ctx context.Context) (postVersions []*PostVersion, err error) {
+	logger := ctx.Value("logger").(utils.Logger)
+
 	rq := r.httpClient.Get("/post_versions.json").
 		SetQueryParam("limit", strconv.Itoa(r.limit))
 
@@ -69,7 +72,8 @@ func (r *PostVersionsRequest) Send(ctx context.Context) (postVersions []*PostVer
 		return // if response is a success flag, return empty slice
 	}
 
-	if err = rs.Into(&postVersions); err == nil { // response is a slice of PostVersion
+	if err = rs.Into(&postVersions); err == nil {
+		logger.With("response", rs.String()).Error("invalid api response")
 		return // then return the slice
 	}
 
