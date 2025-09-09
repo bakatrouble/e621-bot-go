@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"strconv"
 	"time"
 
 	"github.com/bsm/redislock"
@@ -114,4 +115,36 @@ func (s *Storage) SetLastPostVersion(ctx context.Context, version int) error {
 
 func (s *Storage) Lock(ctx context.Context) (*redislock.Lock, error) {
 	return s.locker.Obtain(ctx, LockKey, 100*time.Millisecond, nil)
+}
+
+type Dump struct {
+	Subs            []string
+	Sent            []int
+	LastPostVersion int
+}
+
+func (s *Storage) Dump(ctx context.Context) (dump Dump, err error) {
+	if dump.Subs, err = s.GetSubs(ctx); err != nil {
+		return dump, err
+	}
+
+	var sent []string
+	if sent, err = s.client.SMembers(ctx, SentKey).Result(); err != nil {
+		return dump, err
+	} else {
+		dump.Sent = make([]int, 0, len(sent))
+		for _, v := range sent {
+			var id int
+			if id, err = strconv.Atoi(v); err != nil {
+				return dump, err
+			}
+			dump.Sent = append(dump.Sent, id)
+		}
+	}
+
+	if dump.LastPostVersion, err = s.GetLastPostVersion(ctx); err != nil {
+		return dump, err
+	}
+
+	return dump, nil
 }
