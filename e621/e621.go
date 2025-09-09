@@ -31,7 +31,7 @@ func NewE621(l utils.Logger) *E621 {
 	return &E621{
 		httpClient: req.C().
 			SetBaseURL("https://e621.net").
-			SetCommonHeader("user-agent", "bot/go-2.0 (bakatrouble)").
+			SetCommonHeader("user-agent", "bot/go-2.1 (bakatrouble)").
 			SetLogger(logger{l}).
 			EnableDebugLog(),
 	}

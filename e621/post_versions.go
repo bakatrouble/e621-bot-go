@@ -73,9 +73,8 @@ func (r *PostVersionsRequest) Send(ctx context.Context) (postVersions []*PostVer
 	}
 
 	if err = rs.Into(&postVersions); err == nil {
-		logger.With("response", rs.String()).Error("invalid api response")
 		return // then return the slice
 	}
-
+	logger.With("response", rs.String()).Error("invalid api response")
 	return
 }

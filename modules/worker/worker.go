@@ -34,7 +34,7 @@ func StartWorker(ctx context.Context) {
 
 	go utils.CacheCleaner(ctx)
 
-	ticker := time.NewTicker(config.Interval)
+	ticker := time.NewTicker(time.Second)
 	for {
 		select {
 		case <-ticker.C:
@@ -44,6 +44,7 @@ func StartWorker(ctx context.Context) {
 					tu.ID(config.ChatId),
 					"Error occurred while checking posts: "+err.Error(),
 				))
+				ticker.Reset(config.Interval)
 			}
 		case <-ctx.Done():
 			logger.Info("stopping worker")
