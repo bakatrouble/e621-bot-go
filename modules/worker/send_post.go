@@ -23,7 +23,7 @@ func tagToHashtag(tag string) string {
 	return "#" + r.ReplaceAllString(tag, "_")
 }
 
-func buildCaption(post *e621.Post, matchingQueries []*utils.QueryInfo) string {
+func buildCaption(post *e621.Post, matchingQueries []*utils.QueryInfo) (string, bool) {
 	queryTags := make(map[string]struct{})
 	for _, query := range matchingQueries {
 		for tag := range query.Query.MentionedTags(false) {
@@ -41,7 +41,7 @@ func buildCaption(post *e621.Post, matchingQueries []*utils.QueryInfo) string {
 		}
 	}
 	if len(monitoredTags) == 0 {
-		monitoredTags = append(monitoredTags, "(none)")
+		return "", true
 	}
 	for _, tag := range post.Tags.Artist {
 		artistTags = append(artistTags, tagToHashtag(tag))
@@ -71,7 +71,7 @@ func buildCaption(post *e621.Post, matchingQueries []*utils.QueryInfo) string {
 	}
 	result = append(result, "")
 	result = append(result, fmt.Sprintf("https://e621.net/posts/%d", post.ID))
-	return strings.Join(result, "\n")
+	return strings.Join(result, "\n"), false
 }
 
 func buildKeyboard(fileName string) *telego.InlineKeyboardMarkup {
@@ -180,7 +180,11 @@ func SendPost(ctx context.Context, client *e621.E621, postId int, matchingQuerie
 		return errors.New("post has no file url")
 	}
 
-	caption := buildCaption(post, matchingQueries)
+	caption, abort := buildCaption(post, matchingQueries)
+	if abort {
+		logger.Info("no monitored tags found in post, skipping")
+		return nil
+	}
 
 	mediaBytes, err := client.DownloadFile(ctx, *post.File.Url)
 	if err != nil {
