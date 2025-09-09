@@ -44,8 +44,8 @@ func StartWorker(ctx context.Context) {
 					tu.ID(config.ChatId),
 					"Error occurred while checking posts: "+err.Error(),
 				))
-				ticker.Reset(config.Interval)
 			}
+			ticker.Reset(config.Interval)
 		case <-ctx.Done():
 			logger.Info("stopping worker")
 			return
