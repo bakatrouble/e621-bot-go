@@ -5,6 +5,7 @@ import (
 	"e621-bot-go/e621"
 	"e621-bot-go/modules/telegram_bot"
 	"e621-bot-go/utils"
+	"strings"
 	"sync"
 	"time"
 
@@ -40,10 +41,14 @@ func StartWorker(ctx context.Context) {
 		case <-ticker.C:
 			logger.Info("checking updates")
 			if err = checkPosts(ctx); err != nil {
-				_, _ = bot.SendMessage(ctx, tu.Message(
-					tu.ID(config.ChatId),
-					"Error occurred while checking posts: "+err.Error(),
-				))
+				skipError := false
+				skipError = skipError || strings.Contains(err.Error(), "net/http: TLS handshake timeout")
+				if !skipError {
+					_, _ = bot.SendMessage(ctx, tu.Message(
+						tu.ID(config.ChatId),
+						"Error occurred while checking posts: "+err.Error(),
+					))
+				}
 			}
 			ticker.Reset(config.Interval)
 		case <-ctx.Done():
