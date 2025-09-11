@@ -42,7 +42,7 @@ func StartWorker(ctx context.Context) {
 			logger.Info("checking updates")
 			if err = checkPosts(ctx); err != nil {
 				skipError := false
-				skipError = skipError || strings.Contains(err.Error(), "net/http: TLS handshake timeout")
+				skipError = skipError || strings.Contains(err.Error(), "TLS handshake timeout")
 				if !skipError {
 					_, _ = bot.SendMessage(ctx, tu.Message(
 						tu.ID(config.ChatId),
