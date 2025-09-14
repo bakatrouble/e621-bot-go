@@ -59,14 +59,16 @@ func CheckPvScript(cmd *go_console.Script) go_console.ExitCode {
 	}
 
 	for _, pv := range pvs {
-		if match := worker.CheckPostVersion(pv, queries); match != nil {
-			logger.With("post_version_id", pv.ID, "query", match.Raw).Info("Post version matched")
-			if err = worker.SendPost(ctx, client, pv.PostID, queries); err != nil {
+		if matches := worker.CheckPostVersion(pv, queries); len(matches) > 0 {
+			for _, m := range matches {
+				logger.With("post_version_id", pv.ID, "query", m.Raw).Info("Post version matched")
+			}
+			if err = worker.SendPost(ctx, client, pv.PostID, matches, queries); err != nil {
 				logger.With("err", err).Error("failed to send post")
 				return go_console.ExitError
 			}
 		} else {
-			logger.With("post_version_id", pv.ID).Info("Post version did not match any query")
+			logger.With("post_version_id", pv.ID).Info("Post version did not matches any query")
 		}
 	}
 

@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func CheckPostVersion(pv *e621.PostVersion, queries []*utils.QueryInfo) *utils.QueryInfo {
+func CheckPostVersion(pv *e621.PostVersion, queries []*utils.QueryInfo) (result []*utils.QueryInfo) {
 	currentTags := map[string]bool{}
 	for _, tag := range strings.Split(pv.Tags, " ") {
 		currentTags[tag] = true
@@ -28,11 +28,11 @@ func CheckPostVersion(pv *e621.PostVersion, queries []*utils.QueryInfo) *utils.Q
 
 	for _, query := range queries {
 		if query.Check(currentTags) && !query.Check(prevTags) {
-			return query
+			result = append(result, query)
 		}
 	}
 
-	return nil
+	return result
 }
 
 func checkPosts(ctx context.Context) error {
@@ -61,7 +61,12 @@ func checkPosts(ctx context.Context) error {
 		return err
 	}
 
-	pvsToPost := make([]*e621.PostVersion, 0)
+	type planItem struct {
+		*e621.PostVersion
+		matches []*utils.QueryInfo
+	}
+
+	pvsToPost := make([]planItem, 0)
 	const pageSize = 320
 	for {
 		rq := client.GetPostVersions().WithLimit(pageSize)
@@ -83,8 +88,8 @@ func checkPosts(ctx context.Context) error {
 			}
 
 			//logger.With("post_version_id", pv.ID).With("post_id", pv.PostID).Debug("checking post version")
-			if match := CheckPostVersion(pv, queries); match != nil {
-				pvsToPost = append(pvsToPost, pv)
+			if matches := CheckPostVersion(pv, queries); len(matches) > 0 {
+				pvsToPost = append(pvsToPost, planItem{pv, matches})
 			}
 		}
 		logger.With("count", len(page)).Info("fetched post versions page")
@@ -93,7 +98,7 @@ func checkPosts(ctx context.Context) error {
 		}
 	}
 
-	slices.SortFunc(pvsToPost, func(a, b *e621.PostVersion) int {
+	slices.SortFunc(pvsToPost, func(a, b planItem) int {
 		return cmp.Compare(a.ID, b.ID)
 	})
 
@@ -129,7 +134,7 @@ func checkPosts(ctx context.Context) error {
 		if sentFlags[plan.PostID] {
 			continue
 		}
-		if err = SendPost(ctx, client, plan.PostID, queries); err != nil {
+		if err = SendPost(ctx, client, plan.PostID, plan.matches, queries); err != nil {
 			logger.With("err", err).With("post_version_id", plan.ID).Error("failed to send post")
 			return err
 		}

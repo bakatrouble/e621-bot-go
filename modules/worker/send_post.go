@@ -23,12 +23,9 @@ func tagToHashtag(tag string) string {
 	return "#" + r.ReplaceAllString(tag, "_")
 }
 
-func buildCaption(post *e621.Post, matchingQueries []*utils.QueryInfo) (string, bool) {
-	queryTags := make(map[string]struct{})
-	for _, query := range matchingQueries {
-		for tag := range query.Query.MentionedTags(false) {
-			queryTags[tag] = struct{}{}
-		}
+func buildCaption(post *e621.Post, matches []*utils.QueryInfo, queryTags map[string]struct{}) (string, bool) {
+	if len(matches) == 0 {
+		return "", true
 	}
 	monitoredTags := make([]string, 0)
 	artistTags := make([]string, 0)
@@ -60,6 +57,10 @@ func buildCaption(post *e621.Post, matchingQueries []*utils.QueryInfo) (string, 
 
 	var result []string
 	result = append(result, fmt.Sprintf("Monitored tags: <b>%s</b>", strings.Join(monitoredTags, " ")))
+	result = append(result, "Matched queries:")
+	for _, match := range matches {
+		result = append(result, fmt.Sprintf(" - <code>%s</code>", match.Raw))
+	}
 	if len(artistTags) > 0 {
 		result = append(result, fmt.Sprintf("Artist: <b>%s</b>", strings.Join(artistTags, " ")))
 	}
@@ -168,7 +169,7 @@ func sendAsPhoto(ctx context.Context, postId int, bytes []byte, caption string) 
 	return err
 }
 
-func SendPost(ctx context.Context, client *e621.E621, postId int, queries []*utils.QueryInfo) error {
+func SendPost(ctx context.Context, client *e621.E621, postId int, matches []*utils.QueryInfo, queries []*utils.QueryInfo) error {
 	logger := ctx.Value("logger").(utils.Logger)
 
 	post, err := client.GetPost(ctx, postId)
@@ -180,14 +181,16 @@ func SendPost(ctx context.Context, client *e621.E621, postId int, queries []*uti
 		return errors.New("post has no file url")
 	}
 
-	matchingQueries := make([]*utils.QueryInfo, 0)
+	monitoredTags := make(map[string]struct{}, 0)
 	for _, query := range queries {
 		if query.Check(post.FlatTagsMap()) {
-			matchingQueries = append(matchingQueries, query)
+			for tag := range query.Query.MentionedTags(false) {
+				monitoredTags[tag] = struct{}{}
+			}
 		}
 	}
 
-	caption, abort := buildCaption(post, matchingQueries)
+	caption, abort := buildCaption(post, matches, monitoredTags)
 	if abort {
 		logger.Info("no monitored tags found in post, skipping")
 		return nil
