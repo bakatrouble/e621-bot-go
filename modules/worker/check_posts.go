@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func CheckPostVersion(pv *e621.PostVersion, queries []*utils.QueryInfo) []*utils.QueryInfo {
+func CheckPostVersion(pv *e621.PostVersion, queries []*utils.QueryInfo) *utils.QueryInfo {
 	currentTags := map[string]bool{}
 	for _, tag := range strings.Split(pv.Tags, " ") {
 		currentTags[tag] = true
@@ -26,14 +26,13 @@ func CheckPostVersion(pv *e621.PostVersion, queries []*utils.QueryInfo) []*utils
 		prevTags[tag] = false
 	}
 
-	matchingQueries := make([]*utils.QueryInfo, 0)
 	for _, query := range queries {
 		if query.Check(currentTags) && !query.Check(prevTags) {
-			matchingQueries = append(matchingQueries, query)
+			return query
 		}
 	}
 
-	return matchingQueries
+	return nil
 }
 
 func checkPosts(ctx context.Context) error {
@@ -62,12 +61,7 @@ func checkPosts(ctx context.Context) error {
 		return err
 	}
 
-	type postPlan struct {
-		pv              *e621.PostVersion
-		matchingQueries []*utils.QueryInfo
-	}
-
-	pvsToPost := make([]postPlan, 0)
+	pvsToPost := make([]*e621.PostVersion, 0)
 	const pageSize = 320
 	for {
 		rq := client.GetPostVersions().WithLimit(pageSize)
@@ -89,8 +83,8 @@ func checkPosts(ctx context.Context) error {
 			}
 
 			//logger.With("post_version_id", pv.ID).With("post_id", pv.PostID).Debug("checking post version")
-			if matchingQueries := CheckPostVersion(pv, queries); len(matchingQueries) > 0 {
-				pvsToPost = append(pvsToPost, postPlan{pv, matchingQueries})
+			if match := CheckPostVersion(pv, queries); match != nil {
+				pvsToPost = append(pvsToPost, pv)
 			}
 		}
 		logger.With("count", len(page)).Info("fetched post versions page")
@@ -99,13 +93,13 @@ func checkPosts(ctx context.Context) error {
 		}
 	}
 
-	slices.SortFunc(pvsToPost, func(a, b postPlan) int {
-		return cmp.Compare(a.pv.ID, b.pv.ID)
+	slices.SortFunc(pvsToPost, func(a, b *e621.PostVersion) int {
+		return cmp.Compare(a.ID, b.ID)
 	})
 
 	postIds := make([]int, len(pvsToPost))
 	for _, plan := range pvsToPost {
-		postIds = append(postIds, plan.pv.PostID)
+		postIds = append(postIds, plan.PostID)
 	}
 
 	sentFlags, err := store.IsPostSent(ctx, postIds)
@@ -132,17 +126,17 @@ func checkPosts(ctx context.Context) error {
 		case <-ticker.C:
 		}
 
-		if sentFlags[plan.pv.PostID] {
+		if sentFlags[plan.PostID] {
 			continue
 		}
-		if err = SendPost(ctx, client, plan.pv.PostID, plan.matchingQueries); err != nil {
-			logger.With("err", err).With("post_version_id", plan.pv.ID).Error("failed to send post")
+		if err = SendPost(ctx, client, plan.PostID, queries); err != nil {
+			logger.With("err", err).With("post_version_id", plan.ID).Error("failed to send post")
 			return err
 		}
-		if err = store.SetPostSent(ctx, plan.pv.PostID); err != nil {
+		if err = store.SetPostSent(ctx, plan.PostID); err != nil {
 			logger.With("err", err).Error("failed to mark post as sent")
 		}
-		if err = store.SetLastPostVersion(ctx, plan.pv.ID); err != nil {
+		if err = store.SetLastPostVersion(ctx, plan.ID); err != nil {
 			logger.With("err", err).Error("failed to update last post version")
 		}
 	}

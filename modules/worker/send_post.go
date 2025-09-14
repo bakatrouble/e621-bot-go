@@ -168,7 +168,7 @@ func sendAsPhoto(ctx context.Context, postId int, bytes []byte, caption string) 
 	return err
 }
 
-func SendPost(ctx context.Context, client *e621.E621, postId int, matchingQueries []*utils.QueryInfo) error {
+func SendPost(ctx context.Context, client *e621.E621, postId int, queries []*utils.QueryInfo) error {
 	logger := ctx.Value("logger").(utils.Logger)
 
 	post, err := client.GetPost(ctx, postId)
@@ -178,6 +178,13 @@ func SendPost(ctx context.Context, client *e621.E621, postId int, matchingQuerie
 	if post.File.Url == nil || *post.File.Url == "" {
 		logger.With("file", post.File).Error("file url is empty")
 		return errors.New("post has no file url")
+	}
+
+	matchingQueries := make([]*utils.QueryInfo, 0)
+	for _, query := range queries {
+		if query.Check(post.FlatTagsMap()) {
+			matchingQueries = append(matchingQueries, query)
+		}
 	}
 
 	caption, abort := buildCaption(post, matchingQueries)

@@ -52,6 +52,14 @@ func (p *Post) FlatTags() []string {
 	)
 }
 
+func (p *Post) FlatTagsMap() map[string]bool {
+	tags := make(map[string]bool)
+	for _, tag := range p.FlatTags() {
+		tags[tag] = true
+	}
+	return tags
+}
+
 type PostVersion struct {
 	ID          int      `json:"id"`
 	PostID      int      `json:"post_id"`
