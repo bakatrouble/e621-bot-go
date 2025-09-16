@@ -28,7 +28,7 @@ func ConvertToMp4(ctx context.Context, mediaBytes []byte) ([]byte, error) {
 		pattern = "*.mp4"
 	case "image/gif":
 		pattern = "*.gif"
-	case "video/webm":
+	case "video/webm", "application/octet-stream":
 		pattern = "*.webm"
 	default:
 		return nil, fmt.Errorf("unsupported media type: %s", mime)
