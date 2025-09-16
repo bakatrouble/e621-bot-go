@@ -196,8 +196,13 @@ func SendPost(ctx context.Context, client *e621.E621, postId int, matches []*uti
 		return nil
 	}
 
-	mediaBytes, err := client.DownloadFile(ctx, *post.File.Url)
-	if err != nil {
+	var mediaBytes []byte
+	var skip bool
+	if mediaBytes, err, skip = client.DownloadFile(ctx, *post.File.Url); err != nil {
+		if skip {
+			logger.With("err", err, "url", *post.File.Url).Warn("skipping send")
+			return nil
+		}
 		return err
 	}
 
