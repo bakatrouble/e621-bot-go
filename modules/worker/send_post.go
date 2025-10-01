@@ -169,6 +169,26 @@ func sendAsPhoto(ctx context.Context, postId int, bytes []byte, caption string) 
 	return err
 }
 
+func sendAsFile(ctx context.Context, postId int, bytes []byte, ext string, caption string) error {
+	bot := ctx.Value("bot").(*telego.Bot)
+	config := ctx.Value("config").(*utils.Config)
+
+	cachedName := fmt.Sprintf("%d-%d.jpg", postId, time.Now().Unix())
+	_, _ = utils.CacheFile(ctx, bytes, cachedName)
+	kb := buildKeyboard(cachedName)
+
+	_, err := bot.SendDocument(ctx,
+		tu.Document(
+			tu.ID(config.ChatId),
+			tu.FileFromBytes(bytes, fmt.Sprintf("file.%s", ext)),
+		).
+			WithCaption(caption).
+			WithParseMode("html").
+			WithReplyMarkup(kb),
+	)
+	return err
+}
+
 func SendPost(ctx context.Context, client *e621.E621, postId int, matches []*utils.QueryInfo, queries []*utils.QueryInfo) error {
 	logger := ctx.Value("logger").(utils.Logger)
 
@@ -223,6 +243,10 @@ func SendPost(ctx context.Context, client *e621.E621, postId int, matches []*uti
 		logger.With("size", len(mediaBytes)).Debug("converted to mp4")
 
 		if err = sendAsVideo(ctx, postId, mediaBytes, caption); err != nil {
+			return err
+		}
+	case "swf":
+		if err = sendAsFile(ctx, postId, mediaBytes, "swf", caption); err != nil {
 			return err
 		}
 	default:
