@@ -5,6 +5,7 @@ import (
 	"e621-bot-go/utils"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/imroc/req/v3"
 )
@@ -74,6 +75,11 @@ func (r *PostVersionsRequest) Send(ctx context.Context) (postVersions []*PostVer
 
 	if err = rs.Into(&postVersions); err == nil {
 		return // then return the slice
+	}
+	if strings.Index(rs.String(), "<title>e621 Maintenance</title>") >= 0 {
+		logger.Error("e621 is under maintenance")
+		err = nil
+		postVersions = make([]*PostVersion, 0)
 	}
 	logger.With("response", rs.String()).Error("invalid api response")
 	return
