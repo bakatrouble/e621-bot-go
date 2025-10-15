@@ -77,9 +77,10 @@ func (r *PostVersionsRequest) Send(ctx context.Context) (postVersions []*PostVer
 		return // then return the slice
 	}
 	if strings.Index(rs.String(), "<title>e621 Maintenance</title>") >= 0 {
-		logger.Error("e621 is under maintenance")
+		logger.Warn("e621 is under maintenance")
 		err = nil
 		postVersions = make([]*PostVersion, 0)
+		return
 	}
 	logger.With("response", rs.String()).Error("invalid api response")
 	return
