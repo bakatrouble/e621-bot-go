@@ -100,15 +100,26 @@ func ResizeImage(imageBytes []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	width := uint(imConfig.Width)
+	height := uint(imConfig.Height)
 	if imConfig.Width+imConfig.Height > 10000 {
-		w := float64(imConfig.Width)
-		h := float64(imConfig.Height)
-		scale := float64(10000) / (w + h)
-		im = resize.Thumbnail(uint(math.Floor(w*scale)), uint(math.Floor(h*scale)), im, resize.Lanczos3)
+		scale := float64(10000) / (float64(width) + float64(height))
+		width = uint(math.Floor(float64(imConfig.Width) * scale))
+		height = uint(math.Floor(float64(imConfig.Height) * scale))
+		im = resize.Thumbnail(width, height, im, resize.Lanczos3)
 	}
 	buf := new(bytes.Buffer)
-	if err = jpeg.Encode(buf, im, &jpeg.Options{Quality: 85}); err != nil {
-		return nil, err
+	for {
+		if err = jpeg.Encode(buf, im, &jpeg.Options{Quality: 95}); err != nil {
+			return nil, err
+		}
+		if len(buf.Bytes()) > 10*1024*1024 {
+			width = width * 95 / 100
+			height = height * 95 / 100
+			im = resize.Resize(uint(width), uint(height), im, resize.Lanczos3)
+		} else {
+			break
+		}
 	}
 	return buf.Bytes(), nil
 }
