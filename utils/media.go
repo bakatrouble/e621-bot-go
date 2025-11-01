@@ -114,11 +114,13 @@ func ResizeImage(imageBytes []byte) ([]byte, error) {
 		if err = jpeg.Encode(buf, im, &jpeg.Options{Quality: 95}); err != nil {
 			return nil, err
 		}
-		if len(buf.Bytes()) > 10*1024*1024 {
+		bufLen := len(buf.Bytes())
+		if bufLen > 10*1024*1024 {
+			buf.Reset()
 			width = width * 95 / 100
 			height = height * 95 / 100
 			im = resize.Thumbnail(width, height, im, resize.Lanczos3)
-			fmt.Printf("Resized image to %dx%d\n", width, height)
+			fmt.Printf("Buf is %d, resized image to %dx%d\n", bufLen, width, height)
 		} else {
 			break
 		}
