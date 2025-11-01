@@ -116,7 +116,7 @@ func ResizeImage(imageBytes []byte) ([]byte, error) {
 		if len(buf.Bytes()) > 10*1024*1024 {
 			width = width * 95 / 100
 			height = height * 95 / 100
-			im = resize.Resize(uint(width), uint(height), im, resize.Lanczos3)
+			im = resize.Thumbnail(width, height, im, resize.Lanczos3)
 		} else {
 			break
 		}
