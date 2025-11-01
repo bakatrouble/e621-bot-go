@@ -107,6 +107,7 @@ func ResizeImage(imageBytes []byte) ([]byte, error) {
 		width = uint(math.Floor(float64(imConfig.Width) * scale))
 		height = uint(math.Floor(float64(imConfig.Height) * scale))
 		im = resize.Thumbnail(width, height, im, resize.Lanczos3)
+		fmt.Printf("Resized image to %dx%d\n", width, height)
 	}
 	buf := new(bytes.Buffer)
 	for {
@@ -117,6 +118,7 @@ func ResizeImage(imageBytes []byte) ([]byte, error) {
 			width = width * 95 / 100
 			height = height * 95 / 100
 			im = resize.Thumbnail(width, height, im, resize.Lanczos3)
+			fmt.Printf("Resized image to %dx%d\n", width, height)
 		} else {
 			break
 		}
