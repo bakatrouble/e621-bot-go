@@ -78,7 +78,7 @@ func (s *Storage) IsPostSent(ctx context.Context, postIDs []int) (map[int]bool, 
 
 	pids := make([]interface{}, len(postIDs))
 	for i, id := range postIDs {
-		pids[i] = id
+		pids[i] = strconv.Itoa(id)
 	}
 
 	val, err := s.client.SMIsMember(ctx, SentKey, pids...).Result()
@@ -92,7 +92,7 @@ func (s *Storage) IsPostSent(ctx context.Context, postIDs []int) (map[int]bool, 
 }
 
 func (s *Storage) SetPostSent(ctx context.Context, postID int) error {
-	if err := s.client.SAdd(ctx, SentKey, postID).Err(); err != nil {
+	if err := s.client.SAdd(ctx, SentKey, strconv.Itoa(postID)).Err(); err != nil {
 		return err
 	}
 	return nil
