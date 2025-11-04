@@ -229,6 +229,9 @@ func SendPost(ctx context.Context, client *e621.E621, postId int, matches []*uti
 	switch post.File.Ext {
 	case "jpg", "png", "webp":
 		if mediaBytes, err = utils.ResizeImage(mediaBytes); err != nil {
+			if strings.Contains(err.Error(), "invalid checksum") {
+				return nil
+			}
 			return err
 		}
 		logger.With("size", len(mediaBytes)).Debug("resized image")
