@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	_ "golang.org/x/image/webp"
 	"image"
 	"image/jpeg"
 	_ "image/png"
@@ -13,6 +12,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	_ "golang.org/x/image/webp"
 
 	"github.com/nfnt/resize"
 	"github.com/vimeo/go-magic/magic"
