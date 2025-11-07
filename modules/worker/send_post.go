@@ -157,7 +157,7 @@ func sendAsPhoto(ctx context.Context, postId int, bytes []byte, caption string) 
 	_, _ = utils.CacheFile(ctx, bytes, cachedName)
 	kb := buildKeyboard(cachedName)
 
-	_, err := bot.SendPhoto(ctx,
+	if _, err := bot.SendPhoto(ctx,
 		tu.Photo(
 			tu.ID(config.ChatId),
 			tu.FileFromBytes(bytes, "image.jpg"),
@@ -165,8 +165,10 @@ func sendAsPhoto(ctx context.Context, postId int, bytes []byte, caption string) 
 			WithCaption(caption).
 			WithParseMode("html").
 			WithReplyMarkup(kb),
-	)
-	return errors.Wrap(err, 0)
+	); err != nil {
+		return errors.New(err)
+	}
+	return nil
 }
 
 func sendAsFile(ctx context.Context, postId int, bytes []byte, ext string, caption string) error {
@@ -177,7 +179,7 @@ func sendAsFile(ctx context.Context, postId int, bytes []byte, ext string, capti
 	_, _ = utils.CacheFile(ctx, bytes, cachedName)
 	kb := buildKeyboard(cachedName)
 
-	_, err := bot.SendDocument(ctx,
+	if _, err := bot.SendDocument(ctx,
 		tu.Document(
 			tu.ID(config.ChatId),
 			tu.FileFromBytes(bytes, fmt.Sprintf("file.%s", ext)),
@@ -185,8 +187,10 @@ func sendAsFile(ctx context.Context, postId int, bytes []byte, ext string, capti
 			WithCaption(caption).
 			WithParseMode("html").
 			WithReplyMarkup(kb),
-	)
-	return errors.Wrap(err, 0)
+	); err != nil {
+		return errors.New(err)
+	}
+	return nil
 }
 
 func SendPost(ctx context.Context, client *e621.E621, postId int, matches []*utils.QueryInfo, queries []*utils.QueryInfo) error {
