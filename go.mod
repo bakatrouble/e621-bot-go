@@ -12,7 +12,6 @@ require (
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-contrib/graceful v1.1.4
 	github.com/gin-gonic/gin v1.10.1
-	github.com/go-errors/errors v1.5.1
 	github.com/goccy/go-yaml v1.18.0
 	github.com/gookit/slog v0.6.0
 	github.com/imroc/req/v3 v3.54.2

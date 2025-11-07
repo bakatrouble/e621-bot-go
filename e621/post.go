@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-
-	"github.com/go-errors/errors"
 )
 
 type postResponse struct {
@@ -24,7 +22,7 @@ func (e *E621) GetPost(ctx context.Context, id int) (*Post, error) {
 		resp.Post.File.Url = &fixedUrl
 	}
 	if err != nil {
-		return nil, errors.New(err)
+		return nil, err
 	}
 	return resp.Post, nil
 }

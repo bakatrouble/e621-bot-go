@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-errors/errors"
 	"github.com/imroc/req/v3"
 )
 
@@ -84,6 +83,5 @@ func (r *PostVersionsRequest) Send(ctx context.Context) (postVersions []*PostVer
 		return
 	}
 	logger.With("response", rs.String()).Error("invalid api response")
-	err = errors.New(err)
 	return
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"e621-bot-go/e621"
 	"e621-bot-go/utils"
+	"errors"
 	"fmt"
 	_ "image/gif"
 	_ "image/png"
@@ -12,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-errors/errors"
 	"github.com/mymmrac/telego"
 	tu "github.com/mymmrac/telego/telegoutil"
 	_ "golang.org/x/image/webp"
@@ -166,7 +166,7 @@ func sendAsPhoto(ctx context.Context, postId int, bytes []byte, caption string) 
 			WithParseMode("html").
 			WithReplyMarkup(kb),
 	)
-	return errors.Wrap(err, 0)
+	return err
 }
 
 func sendAsFile(ctx context.Context, postId int, bytes []byte, ext string, caption string) error {
@@ -186,7 +186,7 @@ func sendAsFile(ctx context.Context, postId int, bytes []byte, ext string, capti
 			WithParseMode("html").
 			WithReplyMarkup(kb),
 	)
-	return errors.Wrap(err, 0)
+	return err
 }
 
 func SendPost(ctx context.Context, client *e621.E621, postId int, matches []*utils.QueryInfo, queries []*utils.QueryInfo) error {
@@ -194,7 +194,7 @@ func SendPost(ctx context.Context, client *e621.E621, postId int, matches []*uti
 
 	post, err := client.GetPost(ctx, postId)
 	if err != nil {
-		return errors.New(err)
+		return err
 	}
 	if post.File.Url == nil || *post.File.Url == "" {
 		logger.With("file", post.File).Error("file url is empty")
@@ -223,7 +223,7 @@ func SendPost(ctx context.Context, client *e621.E621, postId int, matches []*uti
 			logger.With("err", err, "url", *post.File.Url).Warn("skipping send")
 			return nil
 		}
-		return errors.New(err)
+		return err
 	}
 
 	switch post.File.Ext {
@@ -232,28 +232,28 @@ func SendPost(ctx context.Context, client *e621.E621, postId int, matches []*uti
 			if strings.Contains(err.Error(), "invalid checksum") || strings.Contains(err.Error(), "invalid format") {
 				return nil
 			}
-			return errors.New(err)
+			return err
 		}
 		logger.With("size", len(mediaBytes)).Debug("resized image")
 
 		if err = sendAsPhoto(ctx, postId, mediaBytes, caption); err != nil {
-			return errors.New(err)
+			return err
 		}
 	case "gif", "mp4", "webm":
 		if mediaBytes, err = utils.ConvertToMp4(ctx, mediaBytes); err != nil {
-			return errors.New(err)
+			return err
 		}
 		logger.With("size", len(mediaBytes)).Debug("converted to mp4")
 
 		if err = sendAsVideo(ctx, postId, mediaBytes, caption); err != nil {
-			return errors.New(err)
+			return err
 		}
 	case "swf":
 		if err = sendAsFile(ctx, postId, mediaBytes, "swf", caption); err != nil {
-			return errors.New(err)
+			return err
 		}
 	default:
-		return errors.Errorf("unsupported file extension: %s", post.File.Ext)
+		return fmt.Errorf("unsupported file extension: %s", post.File.Ext)
 	}
 
 	return nil
