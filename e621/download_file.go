@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"fmt"
 
+	"github.com/go-errors/errors"
 	"github.com/imroc/req/v3"
 )
 
@@ -17,7 +17,7 @@ func (e *E621) DownloadFile(ctx context.Context, url string) ([]byte, error, boo
 		return nil, r.Err, false
 	}
 	if r.IsErrorState() && r.StatusCode == 404 {
-		return nil, fmt.Errorf("server responded 404"), true
+		return nil, errors.Errorf("server responded 404"), true
 	}
 	return b.Bytes(), nil, false
 }

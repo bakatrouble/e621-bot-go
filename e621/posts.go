@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/go-errors/errors"
 	"github.com/imroc/req/v3"
 )
 
@@ -47,7 +48,7 @@ func (r *PostsRequest) Send(ctx context.Context) ([]*Post, error) {
 		Do(ctx).
 		Into(&resp)
 	if err != nil {
-		return nil, err
+		return nil, errors.New(err)
 	}
 	return resp.Posts, nil
 }
