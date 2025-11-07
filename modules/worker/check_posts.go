@@ -10,6 +10,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/go-errors/errors"
 )
 
 func CheckPostVersion(pv *e621.PostVersion, queries []*utils.QueryInfo) (result []*utils.QueryInfo) {
@@ -43,7 +45,7 @@ func checkPosts(ctx context.Context) error {
 	lock, err := store.Lock(ctx)
 	if err != nil {
 		logger.With("err", err).Error("failed to acquire lock")
-		return err
+		return errors.New(err)
 	}
 	defer func(ctx context.Context) {
 		_ = lock.Release(ctx)
@@ -52,13 +54,13 @@ func checkPosts(ctx context.Context) error {
 	queries, err := utils.GetQueries(store, ctx)
 	if err != nil {
 		logger.With("err", err).Error("failed to get queries")
-		return err
+		return errors.New(err)
 	}
 
 	lastPostVersion, err := store.GetLastPostVersion(ctx)
 	if err != nil {
 		logger.With("err", err).Error("failed to get last post version")
-		return err
+		return errors.New(err)
 	}
 
 	type planItem struct {
@@ -76,7 +78,7 @@ func checkPosts(ctx context.Context) error {
 		page, err := rq.Send(ctx)
 		if err != nil {
 			logger.With("err", err).Error("failed to fetch post versions")
-			return err
+			return errors.New(err)
 		}
 		if len(page) == 0 {
 			break
@@ -110,7 +112,7 @@ func checkPosts(ctx context.Context) error {
 	sentFlags, err := store.IsPostSent(ctx, postIds)
 	if err != nil {
 		logger.With("err", err).Error("failed to check sent posts")
-		return err
+		return errors.New(err)
 	}
 
 	if len(pvsToPost) == 0 {
@@ -136,7 +138,7 @@ func checkPosts(ctx context.Context) error {
 		}
 		if err = SendPost(ctx, client, plan.PostID, plan.matches, queries); err != nil {
 			logger.With("err", err).With("post_version_id", plan.ID).Error("failed to send post")
-			return err
+			return errors.New(err)
 		}
 		if err = store.SetPostSent(ctx, plan.PostID); err != nil {
 			logger.With("err", err).Error("failed to mark post as sent")

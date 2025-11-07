@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-errors/errors"
 	tu "github.com/mymmrac/telego/telegoutil"
 )
 
@@ -44,9 +45,17 @@ func StartWorker(ctx context.Context) {
 				skipError := false
 				skipError = skipError || strings.Contains(err.Error(), "TLS handshake timeout")
 				if !skipError {
+					var err *errors.Error
+					ok := errors.As(err, &err)
+					var msg string
+					if ok {
+						msg = err.ErrorStack()
+					} else {
+						msg = err.Error()
+					}
 					_, _ = bot.SendMessage(ctx, tu.Message(
 						tu.ID(config.ChatId),
-						"Error occurred while checking posts: "+err.Error(),
+						"Error occurred while checking posts: "+msg,
 					))
 				}
 			}

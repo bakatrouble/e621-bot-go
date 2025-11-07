@@ -1,6 +1,10 @@
 package e621
 
-import "context"
+import (
+	"context"
+
+	"github.com/go-errors/errors"
+)
 
 func (e *E621) GetTagAliases(ctx context.Context, tag string) (result []string, err error) {
 	rq := e.httpClient.Get("/tag_aliases.json").
@@ -25,5 +29,6 @@ func (e *E621) GetTagAliases(ctx context.Context, tag string) (result []string, 
 		return
 	}
 
+	err = errors.New(err)
 	return
 }
