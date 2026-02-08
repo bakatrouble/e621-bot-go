@@ -65,6 +65,18 @@ func main() {
 				Runner: scripts.CheckPvScript,
 			},
 			{
+				Name:        "check-sent",
+				Description: "Check if a post has been sent",
+				Arguments: []go_console.Argument{
+					{
+						Name:        "post_id",
+						Description: "ID of the post to check status for",
+						Value:       argument.Required,
+					},
+				},
+				Runner: scripts.CheckSentScript,
+			},
+			{
 				Name:        "dump",
 				Description: "Dump all subscriptions",
 				Runner:      scripts.DumpScript,
