@@ -82,7 +82,7 @@ func (s *Storage) IsPostSent(ctx context.Context, postIDs []int) (map[int]bool, 
 	}
 
 	val, err := s.client.SMIsMember(ctx, SentKey, pids...).Result()
-	if !errors.Is(err, redis.Nil) {
+	if err != nil && !errors.Is(err, redis.Nil) {
 		return nil, err
 	}
 	for i, id := range postIDs {
