@@ -80,10 +80,12 @@ func buildKeyboard(fileName string) *telego.InlineKeyboardMarkup {
 		{
 			Text:         "NSFW",
 			CallbackData: fmt.Sprintf("send:nsfw %s", fileName),
+			Style:        "primary",
 		},
 		{
 			Text:         "SFW",
 			CallbackData: fmt.Sprintf("send:sfw %s", fileName),
+			Style:        "success",
 		},
 	})
 }
