@@ -48,7 +48,6 @@ func StartAPI(ctx context.Context) {
 
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "X-API-Key")
-	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
 	corsConfig.AllowAllOrigins = true
 
 	router.Use(sloggin.New(logger))
