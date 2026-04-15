@@ -11,7 +11,7 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 )
 
-type apiResponse struct {
+type sendApiResponse struct {
 	Status   string `json:"status"`
 	UploadID string `json:"upload_id,omitempty"`
 }
@@ -28,11 +28,12 @@ func SendCallbackHandler(ctx *th.Context, callback telego.CallbackQuery) error {
 	cmd := strings.Split(callback.Data, ":")[1]
 	args := strings.Split(cmd, " ")
 	destination := args[0]
+	apiBase := ""
 	switch destination {
 	case "nsfw":
-		destination = config.Destinations.Nsfw
+		apiBase = config.Destinations.Nsfw
 	case "sfw":
-		destination = config.Destinations.Sfw
+		apiBase = config.Destinations.Sfw
 	default:
 		logger.Error("invalid destination")
 		return fmt.Errorf("invalid destination")
@@ -72,53 +73,15 @@ func SendCallbackHandler(ctx *th.Context, callback telego.CallbackQuery) error {
 	if resp, err = req.R().
 		SetContext(ctx).
 		SetBodyJsonMarshal(map[string]string{"path": cachePath}).
-		Post(fmt.Sprintf("%s/internalSend", destination)); err != nil {
+		Post(fmt.Sprintf("%s/internalSend", apiBase)); err != nil {
 		logger.With("err", err).Error("error sending image to destination")
 		return err
 	}
 
-	var apiResp apiResponse
+	var apiResp sendApiResponse
 	if err = resp.Into(&apiResp); err != nil {
-		logger.With("err", err).Error("error parsing response from destination")
+		logger.With("err", err).Error("error parsing response from api")
 		return err
-	}
-
-	responseText := ""
-	switch apiResp.Status {
-	case "ok":
-		responseText = "Sent"
-	case "duplicate":
-		responseText = "Duplicate"
-	default:
-		responseText = "Error"
-	}
-
-	if err = bot.AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
-		CallbackQueryID: callback.ID,
-		Text:            responseText,
-	}); err != nil {
-		logger.With("err", err).Error("failed to answer callback query")
-		return err
-	}
-
-	if apiResp.Status == "ok" {
-		kbd := message.ReplyMarkup
-		switch args[0] {
-		case "nsfw":
-			kbd.InlineKeyboard[0][0].Text = "Cancel NSFW"
-			kbd.InlineKeyboard[0][0].CallbackData = fmt.Sprintf("unsend:nsfw %s %s", apiResp.UploadID, cachedName)
-		case "sfw":
-			kbd.InlineKeyboard[0][1].Text = "Cancel SFW"
-			kbd.InlineKeyboard[0][1].CallbackData = fmt.Sprintf("unsend:sfw %s %s", apiResp.UploadID, cachedName)
-		}
-		if _, err = bot.EditMessageReplyMarkup(ctx, &telego.EditMessageReplyMarkupParams{
-			ChatID:      message.Chat.ChatID(),
-			MessageID:   message.MessageID,
-			ReplyMarkup: kbd,
-		}); err != nil {
-			logger.With("err", err).Error("failed to update reply markup")
-			return err
-		}
 	}
 
 	return nil
