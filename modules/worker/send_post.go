@@ -75,8 +75,8 @@ func buildCaption(post *e621.Post, matches []*utils.QueryInfo, queryTags map[str
 	return strings.Join(result, "\n"), false
 }
 
-func buildKeyboard(fileName string) *telego.InlineKeyboardMarkup {
-	return tu.InlineKeyboard([]telego.InlineKeyboardButton{
+func buildKeyboard(fileName string, nsfwUploadId *string, sfwUploadId *string) *telego.InlineKeyboardMarkup {
+	kbd := tu.InlineKeyboard([]telego.InlineKeyboardButton{
 		{
 			Text:         "NSFW",
 			CallbackData: fmt.Sprintf("send:nsfw %s", fileName),
@@ -88,6 +88,15 @@ func buildKeyboard(fileName string) *telego.InlineKeyboardMarkup {
 			Style:        "success",
 		},
 	})
+	if nsfwUploadId != nil {
+		kbd.InlineKeyboard[0][0].Text = "Cancel NSFW"
+		kbd.InlineKeyboard[0][0].CallbackData = fmt.Sprintf("unsend:nsfw %s %s", nsfwUploadId, fileName)
+	}
+	if sfwUploadId != nil {
+		kbd.InlineKeyboard[0][1].Text = "Cancel SFW"
+		kbd.InlineKeyboard[0][1].CallbackData = fmt.Sprintf("unsend:sfw %s %s", sfwUploadId, fileName)
+	}
+	return kbd
 }
 
 func sendAsVideo(ctx context.Context, postId int, bytes []byte, caption string) error {
@@ -98,7 +107,7 @@ func sendAsVideo(ctx context.Context, postId int, bytes []byte, caption string) 
 	if len(bytes) < 50*1024*1024 {
 		cachedName := fmt.Sprintf("%d-%d.mp4", postId, time.Now().Unix())
 		_, _ = utils.CacheFile(ctx, bytes, cachedName)
-		kb := buildKeyboard(cachedName)
+		kb := buildKeyboard(cachedName, nil, nil)
 
 		var hasAudio bool
 		var err error
@@ -157,7 +166,7 @@ func sendAsPhoto(ctx context.Context, postId int, bytes []byte, caption string) 
 
 	cachedName := fmt.Sprintf("%d-%d.jpg", postId, time.Now().Unix())
 	_, _ = utils.CacheFile(ctx, bytes, cachedName)
-	kb := buildKeyboard(cachedName)
+	kb := buildKeyboard(cachedName, nil, nil)
 
 	if _, err := bot.SendPhoto(ctx,
 		tu.Photo(
@@ -179,7 +188,7 @@ func sendAsFile(ctx context.Context, postId int, bytes []byte, ext string, capti
 
 	cachedName := fmt.Sprintf("%d-%d.jpg", postId, time.Now().Unix())
 	_, _ = utils.CacheFile(ctx, bytes, cachedName)
-	kb := buildKeyboard(cachedName)
+	kb := buildKeyboard(cachedName, nil, nil)
 
 	if _, err := bot.SendDocument(ctx,
 		tu.Document(

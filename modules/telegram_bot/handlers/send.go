@@ -12,7 +12,8 @@ import (
 )
 
 type apiResponse struct {
-	Status string `json:"status"`
+	Status   string `json:"status"`
+	UploadID string `json:"upload_id,omitempty"`
 }
 
 func SendCallbackHandler(ctx *th.Context, callback telego.CallbackQuery) error {
@@ -98,6 +99,26 @@ func SendCallbackHandler(ctx *th.Context, callback telego.CallbackQuery) error {
 	}); err != nil {
 		logger.With("err", err).Error("failed to answer callback query")
 		return err
+	}
+
+	if apiResp.Status == "ok" {
+		kbd := message.ReplyMarkup
+		switch destination {
+		case "nsfw":
+			kbd.InlineKeyboard[0][0].Text = "Cancel NSFW"
+			kbd.InlineKeyboard[0][0].CallbackData = fmt.Sprintf("unsend:nsfw %s %s", apiResp.UploadID, cachedName)
+		case "sfw":
+			kbd.InlineKeyboard[0][1].Text = "Cancel SFW"
+			kbd.InlineKeyboard[0][1].CallbackData = fmt.Sprintf("unsend:sfw %s %s", apiResp.UploadID, cachedName)
+		}
+		if _, err = bot.EditMessageReplyMarkup(ctx, &telego.EditMessageReplyMarkupParams{
+			ChatID:      message.Chat.ChatID(),
+			MessageID:   message.MessageID,
+			ReplyMarkup: kbd,
+		}); err != nil {
+			logger.With("err", err).Error("failed to update reply markup")
+			return err
+		}
 	}
 
 	return nil
