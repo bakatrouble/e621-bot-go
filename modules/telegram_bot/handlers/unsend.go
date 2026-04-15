@@ -56,9 +56,7 @@ func UnsendCallbackHandler(ctx *th.Context, callback telego.CallbackQuery) error
 	responseText := ""
 	switch apiResp.Status {
 	case "ok":
-		responseText = "Sent"
-	case "duplicate":
-		responseText = "Duplicate"
+		responseText = "Unsent"
 	default:
 		responseText = "Error"
 	}
