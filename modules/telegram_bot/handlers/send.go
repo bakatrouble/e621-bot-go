@@ -103,7 +103,7 @@ func SendCallbackHandler(ctx *th.Context, callback telego.CallbackQuery) error {
 
 	if apiResp.Status == "ok" {
 		kbd := message.ReplyMarkup
-		switch destination {
+		switch args[0] {
 		case "nsfw":
 			kbd.InlineKeyboard[0][0].Text = "Cancel NSFW"
 			kbd.InlineKeyboard[0][0].CallbackData = fmt.Sprintf("unsend:nsfw %s %s", apiResp.UploadID, cachedName)
