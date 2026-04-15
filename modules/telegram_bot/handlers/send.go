@@ -84,5 +84,43 @@ func SendCallbackHandler(ctx *th.Context, callback telego.CallbackQuery) error {
 		return err
 	}
 
+	responseText := ""
+	switch apiResp.Status {
+	case "ok":
+		responseText = "Sent"
+	case "duplicate":
+		responseText = "Duplicate"
+	default:
+		responseText = "Error"
+	}
+
+	if err = bot.AnswerCallbackQuery(ctx, &telego.AnswerCallbackQueryParams{
+		CallbackQueryID: callback.ID,
+		Text:            responseText,
+	}); err != nil {
+		logger.With("err", err).Error("failed to answer callback query")
+		return err
+	}
+
+	if apiResp.Status == "ok" {
+		kbd := message.ReplyMarkup
+		switch args[0] {
+		case "nsfw":
+			kbd.InlineKeyboard[0][0].Text = "Cancel NSFW"
+			kbd.InlineKeyboard[0][0].CallbackData = fmt.Sprintf("unsend:nsfw %s %s", apiResp.UploadID, cachedName)
+		case "sfw":
+			kbd.InlineKeyboard[0][1].Text = "Cancel SFW"
+			kbd.InlineKeyboard[0][1].CallbackData = fmt.Sprintf("unsend:sfw %s %s", apiResp.UploadID, cachedName)
+		}
+		if _, err = bot.EditMessageReplyMarkup(ctx, &telego.EditMessageReplyMarkupParams{
+			ChatID:      message.Chat.ChatID(),
+			MessageID:   message.MessageID,
+			ReplyMarkup: kbd,
+		}); err != nil {
+			logger.With("err", err).Error("failed to update reply markup")
+			return err
+		}
+	}
+
 	return nil
 }
