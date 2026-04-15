@@ -105,7 +105,7 @@ func sendAsVideo(ctx context.Context, postId int, bytes []byte, caption string) 
 	logger := ctx.Value("logger").(utils.Logger)
 
 	if len(bytes) < 50*1024*1024 {
-		cachedName := fmt.Sprintf("%d-%d.mp4", postId, time.Now().Unix())
+		cachedName := fmt.Sprintf("%d.mp4", postId)
 		_, _ = utils.CacheFile(ctx, bytes, cachedName)
 		kb := buildKeyboard(cachedName, nil, nil)
 
@@ -164,7 +164,7 @@ func sendAsPhoto(ctx context.Context, postId int, bytes []byte, caption string) 
 	bot := ctx.Value("bot").(*telego.Bot)
 	config := ctx.Value("config").(*utils.Config)
 
-	cachedName := fmt.Sprintf("%d-%d.jpg", postId, time.Now().Unix())
+	cachedName := fmt.Sprintf("%d.jpg", postId)
 	_, _ = utils.CacheFile(ctx, bytes, cachedName)
 	kb := buildKeyboard(cachedName, nil, nil)
 
@@ -186,7 +186,7 @@ func sendAsFile(ctx context.Context, postId int, bytes []byte, ext string, capti
 	bot := ctx.Value("bot").(*telego.Bot)
 	config := ctx.Value("config").(*utils.Config)
 
-	cachedName := fmt.Sprintf("%d-%d.jpg", postId, time.Now().Unix())
+	cachedName := fmt.Sprintf("%d.jpg", postId)
 	_, _ = utils.CacheFile(ctx, bytes, cachedName)
 	kb := buildKeyboard(cachedName, nil, nil)
 
