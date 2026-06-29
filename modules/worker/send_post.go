@@ -137,7 +137,9 @@ func sendAsVideo(ctx context.Context, postId int, bytes []byte, caption string) 
 			)
 		}
 		return err
-	} else {
+	}
+
+	if config.Aws.Region != "" {
 		logger.Info("file is too large, uploading to S3")
 		url, err := utils.UploadToS3(ctx,
 			config,
@@ -150,14 +152,16 @@ func sendAsVideo(ctx context.Context, postId int, bytes []byte, caption string) 
 			return err
 		}
 		caption = fmt.Sprintf("%s\n\n%s", caption, url)
-		_, err = bot.SendMessage(ctx,
-			tu.Message(
-				tu.ID(config.ChatId),
-				caption,
-			).WithParseMode("html"),
-		)
-		return err
+	} else {
+		logger.Info("file is too large, not uploading")
 	}
+	_, err := bot.SendMessage(ctx,
+		tu.Message(
+			tu.ID(config.ChatId),
+			caption,
+		).WithParseMode("html"),
+	)
+	return err
 }
 
 func sendAsPhoto(ctx context.Context, postId int, bytes []byte, caption string) error {

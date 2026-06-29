@@ -3,49 +3,83 @@ package utils
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
-	"github.com/goccy/go-yaml"
+	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/env/v2"
+	_ "github.com/knadh/koanf/providers/env/v2"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/v2"
 )
 
 type AwsConfig struct {
-	Region    string `yaml:"region" binding:"required"`
-	Bucket    string `yaml:"bucket" binding:"required"`
-	AccessKey string `yaml:"access_key" binding:"required"`
-	SecretKey string `yaml:"secret_key" binding:"required"`
+	Region    string `koanf:"region"`
+	Bucket    string `koanf:"bucket"`
+	AccessKey string `koanf:"access_key"`
+	SecretKey string `koanf:"secret_key"`
 }
 
 type DestinationsConfig struct {
-	Nsfw string `yaml:"nsfw" binding:"required"`
-	Sfw  string `yaml:"sfw" binding:"required"`
+	Nsfw string `koanf:"nsfw"`
+	Sfw  string `koanf:"sfw"`
 }
 
 type ApiConfig struct {
-	Port int      `yaml:"port" binding:"required"`
-	Keys []string `yaml:"keys" binding:"required"`
+	Port int      `koanf:"port"`
+	Keys []string `koanf:"keys"`
 }
 
 type Config struct {
-	BotToken     string             `yaml:"bot_token" binding:"required"`
-	ChatId       int64              `yaml:"chat_id" binding:"required"`
-	Api          ApiConfig          `yaml:"api" binding:"required"`
-	Interval     time.Duration      `yaml:"interval" binding:"required"`
-	Redis        string             `yaml:"redis" binding:"required"`
-	CacheDir     string             `yaml:"cache_dir" binding:"required"`
-	Aws          AwsConfig          `yaml:"aws" binding:"required"`
-	Destinations DestinationsConfig `yaml:"destinations" binding:"required"`
-	Production   bool               `yaml:"production"`
+	BotToken     string             `koanf:"bot_token"`
+	ChatId       int64              `koanf:"chat_id"`
+	Api          ApiConfig          `koanf:"api"`
+	Interval     time.Duration      `koanf:"interval"`
+	Redis        string             `koanf:"redis"`
+	CacheDir     string             `koanf:"cache_dir"`
+	Aws          AwsConfig          `koanf:"aws"`
+	Destinations DestinationsConfig `koanf:"destinations"`
+	Production   bool               `koanf:"production"`
 }
 
 func ParseConfig(configFile string) (*Config, error) {
-	config := &Config{}
-	var dat []byte
 	var err error
-	if dat, err = os.ReadFile(configFile); err != nil {
-		return nil, err
+
+	k := koanf.New(".")
+	if configFile != "" {
+		if err = k.Load(file.Provider(configFile), yaml.Parser()); err != nil {
+			panic(err)
+		}
 	}
-	if err = yaml.Unmarshal(dat, config); err != nil {
-		return nil, err
+	if err = k.Load(env.Provider(".", env.Opt{
+		TransformFunc: func(k, v string) (string, any) {
+			return strings.ToLower(k), v
+		},
+	}), nil); err != nil {
+		panic(err)
+	}
+
+	config := Config{}
+	k.UnmarshalWithConf("", &config, koanf.UnmarshalConf{Tag: "koanf"})
+
+	if config.BotToken == "" {
+		panic("bot_token is not set in configuration")
+	}
+
+	if config.ChatId == 0 {
+		panic("chat_id is not set in configuration")
+	}
+
+	if config.Interval == 0 {
+		panic("interval is not set in configuration")
+	}
+
+	if config.Redis == "" {
+		panic("redis is not set in configuration")
+	}
+
+	if config.CacheDir == "" {
+		config.CacheDir = "cache"
 	}
 
 	if config.CacheDir, err = filepath.Abs(config.CacheDir); err != nil {
@@ -56,5 +90,5 @@ func ParseConfig(configFile string) (*Config, error) {
 		return nil, err
 	}
 
-	return config, nil
+	return &config, nil
 }

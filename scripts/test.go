@@ -5,6 +5,7 @@ import (
 	"e621-bot-go/e621"
 	"e621-bot-go/modules/telegram_bot"
 	"e621-bot-go/modules/worker"
+	"e621-bot-go/storage"
 	"e621-bot-go/utils"
 	"fmt"
 	"os"
@@ -42,8 +43,10 @@ func TestScript(cmd *go_console.Script) go_console.ExitCode {
 	ctx = context.WithValue(ctx, "bot", bot)
 
 	client := e621.NewE621(logger)
+	store := storage.NewStorage(config.Redis)
+	queries, err := utils.GetQueries(store, ctx)
 
-	err = worker.SendPost(ctx, client, postId, []*utils.QueryInfo{}, []*utils.QueryInfo{})
+	err = worker.SendPost(ctx, client, postId, []*utils.QueryInfo{queries[0]}, []*utils.QueryInfo{queries[0]})
 	if err != nil {
 		fmt.Printf("Failed to send post: %s\n", err.Error())
 		return go_console.ExitError
