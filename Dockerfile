@@ -15,6 +15,6 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 RUN apk add --no-cache file-dev
 WORKDIR /
 COPY --from=builder /e621-bot-go /e621-bot-go
-RUN mkdir /cache && chown appuser:appgroup /cache
+RUN mkdir /cache /logs && chown appuser:appgroup /cache /logs
 USER appuser:appgroup
 ENTRYPOINT ["/e621-bot-go"]
