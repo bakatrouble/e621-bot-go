@@ -41,6 +41,7 @@ func checkPosts(ctx context.Context) error {
 	logger := ctx.Value("logger").(utils.Logger)
 	store := ctx.Value("store").(*storage.Storage)
 	client := ctx.Value("e621").(*e621.E621)
+	metrics := ctx.Value("metrics").(*utils.Metrics)
 
 	lock, err := store.Lock(ctx)
 	if err != nil {
@@ -92,7 +93,9 @@ func checkPosts(ctx context.Context) error {
 			//logger.With("post_version_id", pv.ID).With("post_id", pv.PostID).Debug("checking post version")
 			if matches := CheckPostVersion(pv, queries); len(matches) > 0 {
 				pvsToPost = append(pvsToPost, planItem{pv, matches})
+				metrics.IncPostsMatched()
 			}
+			metrics.IncPostsChecked()
 		}
 		logger.With("count", len(page)).Info("fetched post versions page")
 		if len(page) < pageSize {
@@ -140,6 +143,7 @@ func checkPosts(ctx context.Context) error {
 			logger.With("err", err).With("post_version_id", plan.ID).Error("failed to send post")
 			return errors.New(err)
 		}
+		metrics.IncPostsSent()
 		if err = store.SetPostSent(ctx, plan.PostID); err != nil {
 			logger.With("err", err).Error("failed to mark post as sent")
 		}

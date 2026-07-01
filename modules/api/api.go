@@ -6,6 +6,7 @@ import (
 	"e621-bot-go/storage"
 	"e621-bot-go/utils"
 	"errors"
+	"net/http"
 	"slices"
 	"sync"
 
@@ -19,6 +20,7 @@ func StartAPI(ctx context.Context) {
 	config := ctx.Value("config").(*utils.Config)
 	wg := ctx.Value("wg").(*sync.WaitGroup)
 	store := ctx.Value("store").(*storage.Storage)
+	metrics := ctx.Value("metrics").(*utils.Metrics)
 
 	logger := utils.NewLogger("api")
 	logger.With("bind", config.Api.Bind).Info("starting api")
@@ -54,6 +56,12 @@ func StartAPI(ctx context.Context) {
 	router.Use(cors.New(corsConfig))
 
 	router.Use(func(c *gin.Context) {
+		if c.Request.URL.Path == "/" || c.Request.URL.Path == "" {
+			c.JSON(http.StatusOK, gin.H{"hello": "world"})
+			c.Abort()
+			return
+		}
+
 		apiKey := c.GetHeader("x-api-key")
 		if !slices.Contains(config.Api.Keys, apiKey) {
 			c.JSON(403, gin.H{"status": "error", "message": "Forbidden"})
@@ -67,6 +75,8 @@ func StartAPI(ctx context.Context) {
 	router.GET("/api/subscriptions", handlers.GetSubscriptionsHandler)
 	router.POST("/api/subscriptions", handlers.AddSubscriptionsHandler)
 	router.DELETE("/api/subscriptions", handlers.DeleteSubscriptionsHandler)
+
+	router.GET("/metrics", gin.WrapH(metrics.PromHandler()))
 
 	if err := router.RunWithContext(ctx); err != nil && !errors.Is(err, context.Canceled) {
 		logger.With("err", err).Error("failed to start web api")

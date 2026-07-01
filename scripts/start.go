@@ -30,6 +30,9 @@ func StartScript(cmd *go_console.Script) go_console.ExitCode {
 	store := storage.NewStorage(config.Redis)
 	ctx = context.WithValue(ctx, "store", store)
 
+	metrics := utils.NewMetrics()
+	ctx = context.WithValue(ctx, "metrics", metrics)
+
 	go worker.StartWorker(ctx)
 	wg.Add(1)
 	go telegram_bot.StartBot(ctx)
