@@ -2,7 +2,6 @@ package utils
 
 import (
 	"context"
-	"e621-bot-go/utils/tint"
 	"fmt"
 	"log/slog"
 	"os"
@@ -31,15 +30,17 @@ type Logger = *slog.Logger
 func NewLogger(module string) Logger {
 	level := slog.LevelDebug
 
-	prefix := ""
-	if module != "" {
-		prefix = fmt.Sprintf("[%s] ", module)
-	}
+	//prefix := ""
+	//if module != "" {
+	//    prefix = fmt.Sprintf("[%s] ", module)
+	//}
 
-	textHandler := tint.NewHandler(os.Stdout, &tint.Options{
-		Level:  level,
-		Prefix: prefix,
-	})
+	//textHandler := tint.NewHandler(os.Stdout, &tint.Options{
+	//	Level:  level,
+	//	Prefix: prefix,
+	//})
+	textHandler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: level}).
+		WithAttrs([]slog.Attr{slog.String("module", module)})
 
 	var handlers []slogx.Middleware
 
