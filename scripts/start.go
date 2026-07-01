@@ -34,7 +34,7 @@ func StartScript(cmd *go_console.Script) go_console.ExitCode {
 	wg.Add(1)
 	go telegram_bot.StartBot(ctx)
 	wg.Add(1)
-	if config.Api.Port > 0 {
+	if config.Api.Bind != "" {
 		go api.StartAPI(ctx)
 		wg.Add(1)
 	}

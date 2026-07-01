@@ -6,7 +6,6 @@ import (
 	"e621-bot-go/storage"
 	"e621-bot-go/utils"
 	"errors"
-	"fmt"
 	"slices"
 	"sync"
 
@@ -22,7 +21,7 @@ func StartAPI(ctx context.Context) {
 	store := ctx.Value("store").(*storage.Storage)
 
 	logger := utils.NewLogger("api")
-	logger.With("host", "127.0.0.1").With("port", config.Api.Port).Info("starting api")
+	logger.With("bind", config.Api.Bind).Info("starting api")
 
 	defer wg.Done()
 
@@ -43,7 +42,7 @@ func StartAPI(ctx context.Context) {
 	}
 
 	router, _ := graceful.Default(
-		graceful.WithAddr(fmt.Sprintf("127.0.0.1:%d", config.Api.Port)),
+		graceful.WithAddr(config.Api.Bind),
 	)
 
 	corsConfig := cors.DefaultConfig()

@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/go \
 FROM alpine:latest
 LABEL org.opencontainers.image.source=https://github.com/bakatrouble/e621-bot-go
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-RUN apk add --no-cache file-dev
+RUN apk add --no-cache file-dev ffmpeg
 WORKDIR /
 COPY --from=builder /e621-bot-go /e621-bot-go
 RUN mkdir /cache /logs && chown appuser:appgroup /cache /logs

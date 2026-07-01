@@ -26,7 +26,7 @@ type DestinationsConfig struct {
 }
 
 type ApiConfig struct {
-	Port int      `koanf:"port"`
+	Bind string   `koanf:"bind"`
 	Keys []string `koanf:"keys"`
 }
 
