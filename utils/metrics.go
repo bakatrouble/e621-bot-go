@@ -36,15 +36,15 @@ func NewMetrics() *Metrics {
 	m := &Metrics{
 		reg: reg,
 		postsChecked: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "posts_checked",
+			Name: "posts_checked_count",
 			Help: "Number of posts checked",
 		}),
 		postsMatched: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "posts_matched",
+			Name: "posts_matched_count",
 			Help: "Number of posts matched",
 		}),
 		postsSent: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: "posts_sent",
+			Name: "posts_sent_count",
 			Help: "Number of posts sent",
 		}),
 	}
