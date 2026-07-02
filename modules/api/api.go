@@ -56,9 +56,14 @@ func StartAPI(ctx context.Context) {
 	router.Use(cors.New(corsConfig))
 
 	router.Use(func(c *gin.Context) {
-		if c.Request.URL.Path == "/" || c.Request.URL.Path == "" || c.Request.URL.Path == "/metrics" {
+		if c.Request.URL.Path == "/" || c.Request.URL.Path == "" {
 			c.JSON(http.StatusOK, gin.H{"hello": "world"})
 			c.Abort()
+			return
+		}
+
+		if c.Request.URL.Path == "/metrics" {
+			c.Next()
 			return
 		}
 
