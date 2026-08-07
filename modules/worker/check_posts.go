@@ -71,7 +71,12 @@ func checkPosts(ctx context.Context) error {
 
 	pvsToPost := make([]planItem, 0)
 	const pageSize = 320
+	page := 0
 	for {
+		if page > 10 {
+			break
+		}
+		page += 1
 		rq := client.GetPostVersions().WithLimit(pageSize)
 		if lastPostVersion != 0 {
 			rq = rq.WithAfterID(lastPostVersion)
