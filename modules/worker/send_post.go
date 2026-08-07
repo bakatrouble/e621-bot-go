@@ -65,6 +65,9 @@ func buildCaption(post *e621.Post, matches []*utils.QueryInfo, queryTags map[str
 		result = append(result, fmt.Sprintf("Artist: <b>%s</b>", strings.Join(artistTags, " ")))
 	}
 	if len(characterTags) > 0 {
+		if len(characterTags) > 15 {
+			characterTags = append(characterTags[:15], "...")
+		}
 		result = append(result, fmt.Sprintf("Character: <b>%s</b>", strings.Join(characterTags, " ")))
 	}
 	if len(copyrightTags) > 0 {
