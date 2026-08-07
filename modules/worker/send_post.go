@@ -234,6 +234,7 @@ func SendPost(ctx context.Context, client *e621.E621, postId int, matches []*uti
 		logger.Info("no monitored tags found in post, skipping")
 		return nil
 	}
+	logger.With("caption", caption).Info("sending post")
 
 	var mediaBytes []byte
 	var skip bool
